@@ -1,0 +1,93 @@
+/*
+ * Copyright (c) 2002 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
+
+package vavi.awt.joystick.hidapi;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import net.java.games.input.Component;
+import net.java.games.input.Controller;
+import net.java.games.input.ControllerEnvironment;
+import net.java.games.input.Rumbler;
+import purejavahidapi.HidDevice;
+import purejavahidapi.HidDeviceInfo;
+import purejavahidapi.PureJavaHidApi;
+import purejavahidapi.hidparser.HidParser;
+import vavi.util.Debug;
+import vavi.util.StringUtil;
+
+
+/**
+ * The purejavahidapi ControllerEnvironment.
+ *
+ * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
+ * @version 0.00 241003 nsano initial version <br>
+ */
+public final class HidapiControllerEnvironment extends ControllerEnvironment {
+
+    /** */
+    private final List<HidapiController> controllers;
+
+    /** */
+    public HidapiControllerEnvironment() {
+        controllers = PureJavaHidApi.enumerateDevices().stream().map(this::toHidapiController).collect(Collectors.toList());
+    }
+
+    /** */
+    @SuppressWarnings("WhileLoopReplaceableByForEach")
+    private HidapiController toHidapiController(HidDeviceInfo deviceInfo) {
+        try {
+            HidDevice device = PureJavaHidApi.openDevice(deviceInfo);
+
+            device.setDeviceRemovalListener(d -> {
+Debug.println("device removed");
+                Iterator<HidapiController> i = controllers.iterator();
+                while (i.hasNext()) {
+                    HidapiController c = i.next();
+                    if (Objects.equals(c.getName(), d.getHidDeviceInfo().getPath())) {
+                        controllers.remove(c);
+Debug.printf("@@@@@@@@@@@ remove: %s/%s ... %d%n", d.getHidDeviceInfo().getPath(), controllers.size());
+                    }
+                }
+            });
+
+Debug.printf("device '%s' ----", device.getHidDeviceInfo().getProductString());
+            byte[] data = new byte[132];
+            data[0] = 1;
+            int len = device.getFeatureReport(data, data.length);
+Debug.printf("getFeatureReport: len: %d", len);
+            if (len > 0) {
+Debug.printf("getFeatureReport:%n%s", StringUtil.getDump(data));
+                HidParser hidParser = new HidParser();
+                byte[] data2 = new byte[131];
+                System.arraycopy(data, 1, data2, 0, len - 1);
+                hidParser.parse(data2, len - 1);
+            }
+
+            return new HidapiController(device, new Component[0], new Controller[0], new Rumbler[0]);
+
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
+    public Controller[] getControllers() {
+        return controllers.toArray(Controller[]::new);
+    }
+
+    @Override
+    public boolean isSupported() {
+        return true;
+    }
+}
+
+/* */
