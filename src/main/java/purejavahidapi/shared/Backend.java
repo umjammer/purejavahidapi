@@ -8,38 +8,39 @@ import purejavahidapi.DeviceRemovalListener;
 import purejavahidapi.HidDevice;
 import purejavahidapi.HidDeviceInfo;
 
+
 abstract public class Backend {
-	// FIXME all this backend stuff is not part of the public API so it should have some access restrictions
-	private HashMap<String, HidDevice> m_OpenDevices = new HashMap<>();
 
-	public abstract void init();
+    // FIXME all this backend stuff is not part of the public API so it should have some access restrictions
+    private HashMap<String, HidDevice> m_OpenDevices = new HashMap<>();
 
-	public abstract void cleanup();
+    public abstract void init();
 
-	public abstract List<HidDeviceInfo> enumerateDevices();
+    public abstract void cleanup();
 
-	public abstract HidDevice openDevice(HidDeviceInfo path) throws IOException;
+    public abstract List<HidDeviceInfo> enumerateDevices();
 
-	public void removeDevice(String deviceId) {
-		m_OpenDevices.remove(deviceId);
-	}
+    public abstract HidDevice openDevice(HidDeviceInfo path) throws IOException;
 
-	public void addDevice(String deviceId, HidDevice device) {
-		m_OpenDevices.put(deviceId, device);
-	}
+    public void removeDevice(String deviceId) {
+        m_OpenDevices.remove(deviceId);
+    }
 
-	public HidDevice getDevice(String deviceId) {
-		return m_OpenDevices.get(deviceId);
-	}
+    public void addDevice(String deviceId, HidDevice device) {
+        m_OpenDevices.put(deviceId, device);
+    }
 
-	public void deviceRemoved(String deviceId) {
-		purejavahidapi.HidDevice device = getDevice(deviceId);
-		if (device != null) {
-			DeviceRemovalListener listener = device.getDeviceRemovalListener();
-			device.close();
-			if (listener != null)
-				listener.onDeviceRemoval(device);
-		}
-	}
+    public HidDevice getDevice(String deviceId) {
+        return m_OpenDevices.get(deviceId);
+    }
 
+    public void deviceRemoved(String deviceId) {
+        purejavahidapi.HidDevice device = getDevice(deviceId);
+        if (device != null) {
+            DeviceRemovalListener listener = device.getDeviceRemovalListener();
+            device.close();
+            if (listener != null)
+                listener.onDeviceRemoval(device);
+        }
+    }
 }

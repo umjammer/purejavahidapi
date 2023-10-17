@@ -10,13 +10,14 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import purejavahidapi.HidDevice;
 import purejavahidapi.HidDeviceInfo;
 import purejavahidapi.PureJavaHidApi;
+import vavi.util.ByteUtil;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
 
 @EnabledIf("localPropertiesExists")
 @PropsEntity(url = "file:local.properties")
-public class Example2 {
+public class Example3 {
 
     static boolean localPropertiesExists() {
         return Files.exists(Paths.get("local.properties"));
@@ -72,54 +73,66 @@ public class Example2 {
                         });
 
                         dev.setInputReportListener((source, Id, data, len) -> {
-                            System.out.printf("onInputReport: id %d len %d data ", Id, len);
-                            for (int i = 0; i < len; i++)
-                                System.out.printf("%02X ", data[i]);
-                            System.out.println();
+                            display2(data);
                         });
-
-                        new Thread(() -> {
-                            while (true) {
-//								try {
-//									Thread.currentThread().sleep(1000);
-//									System.out.println();
-//									System.out.println("Sending reset");
-//									for (int i = 0; i < 10; i++) {
-//										byte[] cmd = new byte[64];
-//										cmd[0] = (byte) 0xFE;
-//										cmd[1] = (byte) 0xED;
-//										cmd[2] = (byte) 0xC0;
-//										cmd[3] = (byte) 0xDE;
-//										System.out.println("SEND");
-//										dev.setOutputReport((byte) 0, cmd, cmd.length);
-//									}
-//									Thread.currentThread().sleep(1000);
-//
-//									deviceOpen = false;
-//									dev.close();
-//									break;
-//								} catch (InterruptedException e) {
-//									// TODO Auto-generated catch block
-//									e.printStackTrace();
-//								}
-
-                                byte[] data = new byte[132];
-                                data[0] = 1;
-                                int len;
-                                if (((len = dev.getFeatureReport(data, data.length)) >= 0) && true) {
-                                    int Id = data[0];
-                                    System.out.printf("getFeatureReport: id %d len %d data ", Id, len);
-                                    for (byte datum : data) System.out.printf("%02X ", datum);
-                                    System.out.println();
-                                }
-                            }
-
-                        }).start();
 
                         Thread.sleep(2000);
                     }
                 }
             }
         }
+    }
+
+    static int c;
+
+    static void display2(byte[] d) {
+        int l3x = d[0] & 0xff;
+        int l3y = d[1] & 0xff;
+        int r3x = d[2] & 0xff;
+        int r3y = d[3] & 0xff;
+
+        boolean tri	= (d[4] & 0x80) != 0;
+        boolean cir	= (d[4] & 0x40) != 0;
+        boolean x = (d[4] & 0x20) != 0;
+        boolean sqr = (d[4] & 0x10) != 0;
+        int dPad = d[4] & 0x0f;
+
+        enum Hat {
+            N("↑"), NE("↗"), E("→"), SE("↘"), S("↓"), SW("↙"), W("←"), NW("↖"), Released(" "); final String s; Hat(String s) { this.s = s; }
+        }
+
+        boolean r3 = (d[5] & 0x80) != 0;
+        boolean l3 = (d[5] & 0x40) != 0;
+        boolean opt = (d[5] & 0x20) != 0;
+        boolean share = (d[5] & 0x10) != 0;
+        boolean r2 = (d[5] & 0x08) != 0;
+        boolean l2 = (d[5] & 0x04) != 0;
+        boolean r1 = (d[5] & 0x02) != 0;
+        boolean l1 = (d[5] & 0x01) != 0;
+
+        int counter = (d[6] >> 2) & 0x3f;
+        boolean tPad = (d[6] & 0x02) != 0;
+        boolean ps = (d[6] & 0x01) != 0;
+
+        int lTrigger = d[7] & 0xff;
+        int rTrigger = d[8] & 0xff;
+
+        int timestump = ByteUtil.readLeShort(d, 9) & 0xffff;
+        int temperature = d[11] & 0xff;
+
+        int gyroX = ByteUtil.readLeShort(d, 12) & 0xffff;
+        int gyroY = ByteUtil.readLeShort(d, 14) & 0xffff;
+        int gyroZ = ByteUtil.readLeShort(d, 16) & 0xffff;
+
+        int accelX = ByteUtil.readLeShort(d, 18) & 0xffff;
+        int accelY = ByteUtil.readLeShort(d, 20) & 0xffff;
+        int accelZ = ByteUtil.readLeShort(d, 22) & 0xffff;
+
+        boolean extension_detection = (d[29] & 0x01) != 0;
+        int battery_info = (d[29] >> 3) & 0x1f;
+
+        System.out.printf("L3 x:%02x y:%02x R3 x:%02x y:%02x (%d)%n", l3x, l3y, r3x, r3y, c++);
+        System.out.printf("%3s %3s %3s %3s %5s %2s %s%n", tri ? "▲" : "", cir ? "●" : "", x ? "✖" : "", sqr ? "■" : "", tPad ? "T-PAD" : "", ps ? "PS" : "", Hat.values()[dPad].s);
+        System.out.printf("gyro x:%04x y:%04x z:%04x, accel x:%04x y:%04x z:%04x%n%n", gyroX, gyroY, gyroZ, accelX, accelY, accelZ);
     }
 }

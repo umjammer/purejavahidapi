@@ -2,105 +2,131 @@
  * Copyright (c) 2014, Kustaa Nyholm / SpareTimeLabs
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, 
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
- * Redistributions of source code must retain the above copyright notice, this list 
+ * Redistributions of source code must retain the above copyright notice, this list
  * of conditions and the following disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice, this 
+ *
+ * Redistributions in binary form must reproduce the above copyright notice, this
  * list of conditions and the following disclaimer in the documentation and/or other
  * materials provided with the distribution.
- *  
- * Neither the name of the Kustaa Nyholm or SpareTimeLabs nor the names of its 
- * contributors may be used to endorse or promote products derived from this software 
+ *
+ * Neither the name of the Kustaa Nyholm or SpareTimeLabs nor the names of its
+ * contributors may be used to endorse or promote products derived from this software
  * without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  */
+
 package purejavahidapi.macosx;
 
-import java.nio.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Hashtable;
 
-import static purejavahidapi.macosx.CoreFoundationLibrary.*;
-import static purejavahidapi.macosx.IOHIDManagerLibrary.*;
-
-import com.sun.jna.*;
-
-import purejavahidapi.*;
+import com.sun.jna.Callback;
+import com.sun.jna.Memory;
+import com.sun.jna.NativeLong;
+import com.sun.jna.Pointer;
+import purejavahidapi.DeviceRemovalListener;
+import purejavahidapi.InputReportListener;
 import purejavahidapi.shared.SyncPoint;
 
+import static purejavahidapi.macosx.CoreFoundationLibrary.*;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceCallback;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceClose;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceGetProperty;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceGetReport;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceRef;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceRegisterInputReportCallback;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceScheduleWithRunLoop;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceSetReport;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceUnscheduleFromRunLoop;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDElementGetProperty;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDElementRef;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDManagerRegisterDeviceRemovalCallback;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDReportCallback;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDMaxInputReportSizeKey;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDOptionsTypeSeizeDevice;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDProductIDKey;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDReportTypeFeature;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDReportTypeOutput;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDTransportKey;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDVendorIDKey;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOReturnSuccess;
+
+
 public class HidDevice extends purejavahidapi.HidDevice {
-	private MacOsXBackend m_Backend;
-	private static int m_InternalIdGenerator = 0;
-	int m_InternalId = m_InternalIdGenerator++; // used when passing 'HidDevice' to Mac OS X callbacks
-	private IOHIDDeviceRef m_IOHIDDeviceRef;
-	private boolean m_Disconnected;
-	private CFStringRef m_CFRunLoopMode;
-	private CFRunLoopRef m_CFRunLoopRef;
-	private CFRunLoopSourceRef m_CFRunLoopSourceRef;
-	private Pointer m_InputReportBuffer;
-	private byte[] m_InputReportData;
-	private int m_MaxInputReportLength;
-	private Thread m_Thread;
-	private SyncPoint m_SyncStart;
-	private SyncPoint m_SyncShutdown;
-	private boolean m_StopThread;
 
-	// store a reference to the callbacks here so that they are not prematurely garbage collected
-	private HidReportCallback m_HidReportCallBack;
-	private HidDeviceRemovalCallback m_HidDeviceRemovalCallback;
-	private PerformSignalCallback m_PerformSignalCallback;
+    private MacOsXBackend m_Backend;
+    private static int m_InternalIdGenerator = 0;
+    int m_InternalId = m_InternalIdGenerator++; // used when passing 'HidDevice' to Mac OS X callbacks
+    private IOHIDDeviceRef m_IOHIDDeviceRef;
+    private boolean m_Disconnected;
+    private CFStringRef m_CFRunLoopMode;
+    private CFRunLoopRef m_CFRunLoopRef;
+    private CFRunLoopSourceRef m_CFRunLoopSourceRef;
+    private Pointer m_InputReportBuffer;
+    private byte[] m_InputReportData;
+    private int m_MaxInputReportLength;
+    private Thread m_Thread;
+    private SyncPoint m_SyncStart;
+    private SyncPoint m_SyncShutdown;
+    private boolean m_StopThread;
 
-	private static Hashtable<Callback, HidDevice> m_DevFromCallback = new Hashtable<>();
+    // store a reference to the callbacks here so that they are not prematurely garbage collected
+    private HidReportCallback m_HidReportCallBack;
+    private HidDeviceRemovalCallback m_HidDeviceRemovalCallback;
+    private PerformSignalCallback m_PerformSignalCallback;
 
-	Pointer asPointerForPassingToCallback() {
-		return new Pointer(m_InternalId);
-	}
+    private static Hashtable<Callback, HidDevice> m_DevFromCallback = new Hashtable<>();
 
-	HidDevice(HidDeviceInfo hidDeviceInfo, MacOsXBackend backend) {
-		m_Backend = backend;
-		m_HidDeviceInfo = hidDeviceInfo;
+    Pointer asPointerForPassingToCallback() {
+        return new Pointer(m_InternalId);
+    }
 
-		m_IOHIDDeviceRef = m_Backend.getIOHIDDeviceRef(hidDeviceInfo.getPath());
+    HidDevice(HidDeviceInfo hidDeviceInfo, MacOsXBackend backend) {
+        m_Backend = backend;
+        m_HidDeviceInfo = hidDeviceInfo;
 
-		m_PerformSignalCallback = new PerformSignalCallback();
-		m_DevFromCallback.put(m_PerformSignalCallback, this);
+        m_IOHIDDeviceRef = m_Backend.getIOHIDDeviceRef(hidDeviceInfo.getPath());
 
-		m_HidReportCallBack = new HidReportCallback();
-		m_DevFromCallback.put(m_HidReportCallBack, this);
+        m_PerformSignalCallback = new PerformSignalCallback();
+        m_DevFromCallback.put(m_PerformSignalCallback, this);
 
-		m_HidDeviceRemovalCallback = new HidDeviceRemovalCallback();
-		m_DevFromCallback.put(m_HidDeviceRemovalCallback, this);
+        m_HidReportCallBack = new HidReportCallback();
+        m_DevFromCallback.put(m_HidReportCallBack, this);
 
-		m_SyncStart = new SyncPoint(2);
-		m_SyncShutdown = new SyncPoint(2);
-		m_MaxInputReportLength = getIntProperty(m_IOHIDDeviceRef, CFSTR(kIOHIDMaxInputReportSizeKey));
-		if (m_MaxInputReportLength > 0) {
-			m_InputReportBuffer = new Memory(m_MaxInputReportLength);
-			m_InputReportData = new byte[m_MaxInputReportLength];
-		}
+        m_HidDeviceRemovalCallback = new HidDeviceRemovalCallback();
+        m_DevFromCallback.put(m_HidDeviceRemovalCallback, this);
 
-		String str = String.format("HIDAPI_0x%08x", Pointer.nativeValue(m_IOHIDDeviceRef.getPointer()));
-		m_CFRunLoopMode = CFStringCreateWithCString(null, str, kCFStringEncodingASCII);
+        m_SyncStart = new SyncPoint(2);
+        m_SyncShutdown = new SyncPoint(2);
+        m_MaxInputReportLength = getIntProperty(m_IOHIDDeviceRef, CFSTR(kIOHIDMaxInputReportSizeKey));
+        if (m_MaxInputReportLength > 0) {
+            m_InputReportBuffer = new Memory(m_MaxInputReportLength);
+            m_InputReportData = new byte[m_MaxInputReportLength];
+        }
 
-		if (m_MaxInputReportLength > 0)
-			IOHIDDeviceRegisterInputReportCallback(m_IOHIDDeviceRef, m_InputReportBuffer, m_MaxInputReportLength, m_HidReportCallBack, asPointerForPassingToCallback()); // shoudl pass dev
+        String str = String.format("HIDAPI_0x%08x", Pointer.nativeValue(m_IOHIDDeviceRef.getPointer()));
+        m_CFRunLoopMode = CFStringCreateWithCString(null, str, kCFStringEncodingASCII);
 
-		IOHIDManagerRegisterDeviceRemovalCallback(MacOsXBackend.m_HidManager, m_HidDeviceRemovalCallback, asPointerForPassingToCallback());
+        if (m_MaxInputReportLength > 0)
+            IOHIDDeviceRegisterInputReportCallback(m_IOHIDDeviceRef, m_InputReportBuffer, m_MaxInputReportLength, m_HidReportCallBack, asPointerForPassingToCallback()); // should pass dev
 
-		m_Thread = new Thread(() -> {
+        IOHIDManagerRegisterDeviceRemovalCallback(MacOsXBackend.m_HidManager, m_HidDeviceRemovalCallback, asPointerForPassingToCallback());
+
+        m_Thread = new Thread(() -> {
 
             // Move the device's run loop to this thread.
             IOHIDDeviceScheduleWithRunLoop(m_IOHIDDeviceRef, CFRunLoopGetCurrent(), m_CFRunLoopMode);
@@ -139,60 +165,60 @@ public class HidDevice extends purejavahidapi.HidDevice {
                 m_SyncShutdown.waitAndSync();
 
         }, m_HidDeviceInfo.getPath());
-		m_Backend.addDevice(m_HidDeviceInfo.getDeviceId(), this);
-		m_Open = true;
-		m_Thread.start();
-		m_SyncStart.waitAndSync();
-	}
+        m_Backend.addDevice(m_HidDeviceInfo.getDeviceId(), this);
+        m_Open = true;
+        m_Thread.start();
+        m_SyncStart.waitAndSync();
+    }
 
-	@Override
-	synchronized public void setInputReportListener(InputReportListener listener) {
-		if (!m_Open)
-			throw new IllegalStateException("device not open");
-		m_InputReportListener = listener;
-	}
+    @Override
+    synchronized public void setInputReportListener(InputReportListener listener) {
+        if (!m_Open)
+            throw new IllegalStateException("device not open");
+        m_InputReportListener = listener;
+    }
 
-	@Override
-	synchronized public void setDeviceRemovalListener(DeviceRemovalListener listener) {
-		if (!m_Open)
-			throw new IllegalStateException("device not open");
-		m_DeviceRemovalListener = listener;
-	}
+    @Override
+    synchronized public void setDeviceRemovalListener(DeviceRemovalListener listener) {
+        if (!m_Open)
+            throw new IllegalStateException("device not open");
+        m_DeviceRemovalListener = listener;
+    }
 
-	static void processPendingEvents() {
-		int res;
-		do {
-			res = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.001, false);
-		} while (res != kCFRunLoopRunFinished && res != kCFRunLoopRunTimedOut);
-	}
+    static void processPendingEvents() {
+        int res;
+        do {
+            res = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.001, false);
+        } while (res != kCFRunLoopRunFinished && res != kCFRunLoopRunTimedOut);
+    }
 
-	static int getIntProperty(IOHIDDeviceRef device, CFStringRef key) {
-		int[] value = { 0 };
+    static int getIntProperty(IOHIDDeviceRef device, CFStringRef key) {
+        int[] value = {0};
 
-		CFTypeRef ref = IOHIDDeviceGetProperty(device, key);
-		if (ref != null) {
-			if (CFGetTypeID(ref.getPointer()) == CFNumberGetTypeID()) {
-				CFNumberGetValue(new CFNumber(ref.getPointer()), kCFNumberSInt32Type, value);
-				return value[0];
-			}
-		}
-		return 0;
-	}
+        CFTypeRef ref = IOHIDDeviceGetProperty(device, key);
+        if (ref != null) {
+            if (CFGetTypeID(ref.getPointer()) == CFNumberGetTypeID()) {
+                CFNumberGetValue(new CFNumber(ref.getPointer()), kCFNumberSInt32Type, value);
+                return value[0];
+            }
+        }
+        return 0;
+    }
 
-	static int getIntProperty(IOHIDElementRef element, CFStringRef key) {
-		int[] value = { 0 };
+    static int getIntProperty(IOHIDElementRef element, CFStringRef key) {
+        int[] value = {0};
 
-		CFTypeRef ref = IOHIDElementGetProperty(element, key);
-		if (ref != null) {
-			if (CFGetTypeID(ref.getPointer()) == CFNumberGetTypeID()) {
-				CFNumberGetValue(new CFNumber(ref.getPointer()), kCFNumberSInt32Type, value);
-				return value[0];
-			}
-		}
-		return 0;
-	}
+        CFTypeRef ref = IOHIDElementGetProperty(element, key);
+        if (ref != null) {
+            if (CFGetTypeID(ref.getPointer()) == CFNumberGetTypeID()) {
+                CFNumberGetValue(new CFNumber(ref.getPointer()), kCFNumberSInt32Type, value);
+                return value[0];
+            }
+        }
+        return 0;
+    }
 
-	static String getStringProperty(IOHIDDeviceRef device, CFStringRef prop) {
+    static String getStringProperty(IOHIDDeviceRef device, CFStringRef prop) {
         CFTypeRef t = IOHIDDeviceGetProperty(device, prop);
         CFStringRef str = null;
         if (t != null)
@@ -200,7 +226,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
         if (str != null) {
             long str_len = CFStringGetLength(str);
             CFRange range = new CFRange(0, str_len);
-            long[] used_buf_len = { 0 };
+            long[] used_buf_len = {0};
             // long chars_copied = CFStringGetBytes(str, range, kCFStringEncodingUTF32LE, (byte) '?', false, buf, 255, used_buf_len);
             CFStringGetBytes(str, range, kCFStringEncodingUTF8, (byte) '?', false, null, 0, used_buf_len);
             byte[] buf = new byte[(int) used_buf_len[0]];
@@ -208,196 +234,198 @@ public class HidDevice extends purejavahidapi.HidDevice {
             return new String(buf, StandardCharsets.UTF_8);
         }
         return null;
-	}
+    }
 
-	static String createPathForDevide(IOHIDDeviceRef dev) {
-		short vid, pid;
-		String transport = getStringProperty(dev, CFSTR(kIOHIDTransportKey));
-		if (transport == null)
-			return null;
-		vid = (short) getIntProperty(dev, CFSTR(kIOHIDVendorIDKey));
-		pid = (short) getIntProperty(dev, CFSTR(kIOHIDProductIDKey));
+    static String createPathForDevice(IOHIDDeviceRef dev) {
+        short vid, pid;
+        String transport = getStringProperty(dev, CFSTR(kIOHIDTransportKey));
+        if (transport == null)
+            return null;
+        vid = (short) getIntProperty(dev, CFSTR(kIOHIDVendorIDKey));
+        pid = (short) getIntProperty(dev, CFSTR(kIOHIDProductIDKey));
 
-		return String.format("%s_%04x_%04x_0x%08x", transport, vid, pid, Pointer.nativeValue(dev.getPointer()));
-	}
+        return String.format("%s_%04x_%04x_0x%08x", transport, vid, pid, Pointer.nativeValue(dev.getPointer()));
+    }
 
-	static class HidDeviceRemovalCallback implements IOHIDDeviceCallback {
-		@Override
-		public void hid_device_removal_callback(Pointer context, int result, Pointer sender, IOHIDDeviceRef dev_ref) {
-			HidDevice dev = m_DevFromCallback.get(this);
-			if (dev != null) {
-				dev.m_Disconnected = true;
-				dev.close();
-				if (dev.m_DeviceRemovalListener != null)
-					dev.m_DeviceRemovalListener.onDeviceRemoval(dev);
-			} else
-				System.err.println("HidDeviceRemovalCallback could not get the HidDevice object");
-		}
-	}
+    static class HidDeviceRemovalCallback implements IOHIDDeviceCallback {
 
-	static class HidReportCallback implements IOHIDReportCallback {
-		@Override
-		public void callback(Pointer context, int result, Pointer sender, int reportType, int reportId, Pointer report, NativeLong report_length) {
-			// System.out.println("HidReportCallback "+Thread.currentThread().getName());
-			HidDevice dev = m_DevFromCallback.get(this);
-			if (dev != null) {
-				if (dev.m_InputReportListener != null) {
-					int length = report_length.intValue();
-					if (reportId == 0) {
-						length = report_length.intValue();
-						report.read(0, dev.m_InputReportData, 0, length);
-					} else {
-						length = report_length.intValue() - 1;
-						report.read(1, dev.m_InputReportData, 0, length);
-					}
-					dev.m_InputReportListener.onInputReport(dev, (byte) reportId, dev.m_InputReportData, length);
-				}
-			} else
-				System.err.println("HidReportCallback could not get the HidDevice object");
-		}
-	}
+        @Override
+        public void hid_device_removal_callback(Pointer context, int result, Pointer sender, IOHIDDeviceRef dev_ref) {
+            HidDevice dev = m_DevFromCallback.get(this);
+            if (dev != null) {
+                dev.m_Disconnected = true;
+                dev.close();
+                if (dev.m_DeviceRemovalListener != null)
+                    dev.m_DeviceRemovalListener.onDeviceRemoval(dev);
+            } else
+                System.err.println("HidDeviceRemovalCallback could not get the HidDevice object");
+        }
+    }
 
-	static private class PerformSignalCallback implements CFRunLoopPerformCallBack {
-		@Override
-		public void callback(Pointer context) {
-			CFRunLoopStop(CFRunLoopGetCurrent());
-		}
-	}
+    static class HidReportCallback implements IOHIDReportCallback {
 
-	@Override
-	synchronized public int getFeatureReport(byte[] data, int length) {
-		if (!m_Open)
-			throw new IllegalStateException("device not open");
-		int[] len = { length };
-		int res;
+        @Override
+        public void callback(Pointer context, int result, Pointer sender, int reportType, int reportId, Pointer report, NativeLong report_length) {
+            // System.out.println("HidReportCallback "+Thread.currentThread().getName());
+            HidDevice dev = m_DevFromCallback.get(this);
+            if (dev != null) {
+                if (dev.m_InputReportListener != null) {
+                    int length;
+                    if (reportId == 0) {
+                        length = report_length.intValue();
+                        report.read(0, dev.m_InputReportData, 0, length);
+                    } else {
+                        length = report_length.intValue() - 1;
+                        report.read(1, dev.m_InputReportData, 0, length);
+                    }
+                    dev.m_InputReportListener.onInputReport(dev, (byte) reportId, dev.m_InputReportData, length);
+                }
+            } else
+                System.err.println("HidReportCallback could not get the HidDevice object");
+        }
+    }
 
-		res = IOHIDDeviceGetReport(m_IOHIDDeviceRef, kIOHIDReportTypeFeature, 0xFF & data[0], ByteBuffer.wrap(data), len);
-		if (res == kIOReturnSuccess)
-			return len[0];
-		else
-			return -1;
-	}
+    static private class PerformSignalCallback implements CFRunLoopPerformCallBack {
 
-	@Override
-	synchronized public int getFeatureReport(int reportId, byte[] data, int length) {
-		if (!m_Open)
-			throw new IllegalStateException("device not open");
-		int[] len = { length };
-		int res;
+        @Override
+        public void callback(Pointer context) {
+            CFRunLoopStop(CFRunLoopGetCurrent());
+        }
+    }
 
-		byte[] temp = new byte[length + 1];
-		res = IOHIDDeviceGetReport(m_IOHIDDeviceRef, kIOHIDReportTypeFeature, reportId, ByteBuffer.wrap(temp), len);
-		int rlen = len[0];
-		if (res == kIOReturnSuccess) {
-			if (reportId == 0) {
-				System.arraycopy(temp, 0, data, 0, rlen);
-				return rlen;
-			} else {
-				System.arraycopy(temp, 1, data, 0, rlen - 1);
-				return rlen - 1;
-			}
-		} else
-			return -1;
-	}
+    @Override
+    synchronized public int getFeatureReport(byte[] data, int length) {
+        if (!m_Open)
+            throw new IllegalStateException("device not open");
+        int[] len = {length};
+        int res;
 
-	private int setReport(int type, byte reportID, byte[] data, int length) {
-		ByteBuffer data_to_send;
+        res = IOHIDDeviceGetReport(m_IOHIDDeviceRef, kIOHIDReportTypeFeature, 0xFF & data[0], ByteBuffer.wrap(data), len);
+        if (res == kIOReturnSuccess)
+            return len[0];
+        else
+            return -1;
+    }
 
-		int length_to_send;
-		int res;
+    @Override
+    synchronized public int getFeatureReport(int reportId, byte[] data, int length) {
+        if (!m_Open)
+            throw new IllegalStateException("device not open");
+        int[] len = {length};
+        int res;
 
-		data_to_send = ByteBuffer.wrap(data);
-		length_to_send = length;
+        byte[] temp = new byte[length + 1];
+        res = IOHIDDeviceGetReport(m_IOHIDDeviceRef, kIOHIDReportTypeFeature, reportId, ByteBuffer.wrap(temp), len);
+        int rlen = len[0];
+        if (res == kIOReturnSuccess) {
+            if (reportId == 0) {
+                System.arraycopy(temp, 0, data, 0, rlen);
+                return rlen;
+            } else {
+                System.arraycopy(temp, 1, data, 0, rlen - 1);
+                return rlen - 1;
+            }
+        } else
+            return -1;
+    }
 
-		// On Mac OS X the IOHIDDeviceSetReport() always takes pure data and explicit report number (which maybe 0 if numbers are not used)
-		res = IOHIDDeviceSetReport(m_IOHIDDeviceRef, type, 0xff & reportID, data_to_send, length_to_send);
+    private int setReport(int type, byte reportID, byte[] data, int length) {
+        ByteBuffer data_to_send;
 
-		if (res == kIOReturnSuccess) {
-			return length;
-		} else
-			return -1;
-	}
+        int length_to_send;
+        int res;
 
-	@Override
-	synchronized public int setOutputReport(byte reportId, byte[] data, int length) {
-		if (!m_Open)
-			throw new IllegalStateException("device not open");
-		int i = reportId != 0 ? 1 : 0;
-		byte[] temp = new byte[length + i];
-		temp[0] = reportId;
-		System.arraycopy(data, 0, temp, i, length);
-		return setReport(kIOHIDReportTypeOutput, reportId, temp, length+i);
-	}
+        data_to_send = ByteBuffer.wrap(data);
+        length_to_send = length;
 
-	@Override
-	synchronized public int setFeatureReport(byte reportId, byte[] data, int length) {
-		if (!m_Open)
-			throw new IllegalStateException("device not open");
-		int i = reportId != 0 ? 1 : 0;
-		byte[] temp = new byte[length + i];
-		temp[0] = reportId;
-		System.arraycopy(data, 0, temp, i, length);
-		return setReport(kIOHIDReportTypeFeature, reportId, temp, length + i);
-	}
+        // On Mac OS X the IOHIDDeviceSetReport() always takes pure data and explicit report number (which maybe 0 if numbers are not used)
+        res = IOHIDDeviceSetReport(m_IOHIDDeviceRef, type, 0xff & reportID, data_to_send, length_to_send);
 
-	@Override
-	synchronized public int setFeatureReport(byte[] data, int length) {
-		if (!m_Open)
-			throw new IllegalStateException("device not open");
-		return setReport(kIOHIDReportTypeFeature, (byte) 0, data, length);
-	}
+        if (res == kIOReturnSuccess) {
+            return length;
+        } else
+            return -1;
+    }
 
-	@Override
-	synchronized public void close() {
-		if (!m_Open)
-			throw new IllegalStateException("device not open");
+    @Override
+    synchronized public int setOutputReport(byte reportId, byte[] data, int length) {
+        if (!m_Open)
+            throw new IllegalStateException("device not open");
+        int i = reportId != 0 ? 1 : 0;
+        byte[] temp = new byte[length + i];
+        temp[0] = reportId;
+        System.arraycopy(data, 0, temp, i, length);
+        return setReport(kIOHIDReportTypeOutput, reportId, temp, length + i);
+    }
 
-		// Disconnect the report callback before close.
-		// according to the following link unregistering callbacks is not safe ???
-		// https://github.com/signal11/hidapi/issues/116
+    @Override
+    synchronized public int setFeatureReport(byte reportId, byte[] data, int length) {
+        if (!m_Open)
+            throw new IllegalStateException("device not open");
+        int i = reportId != 0 ? 1 : 0;
+        byte[] temp = new byte[length + i];
+        temp[0] = reportId;
+        System.arraycopy(data, 0, temp, i, length);
+        return setReport(kIOHIDReportTypeFeature, reportId, temp, length + i);
+    }
 
-		IOHIDDeviceRegisterInputReportCallback(m_IOHIDDeviceRef, m_InputReportBuffer, m_MaxInputReportLength, null, null);
-		IOHIDManagerRegisterDeviceRemovalCallback(MacOsXBackend.m_HidManager, null, null);
-		IOHIDDeviceUnscheduleFromRunLoop(m_IOHIDDeviceRef, m_CFRunLoopRef, m_CFRunLoopMode);
-		IOHIDDeviceScheduleWithRunLoop(m_IOHIDDeviceRef, CFRunLoopGetMain(), kCFRunLoopDefaultMode);
+    @Override
+    synchronized public int setFeatureReport(byte[] data, int length) {
+        if (!m_Open)
+            throw new IllegalStateException("device not open");
+        return setReport(kIOHIDReportTypeFeature, (byte) 0, data, length);
+    }
 
-		m_StopThread = true;
-		// Wake up the run thread's event loop so that the thread can exit.
-		CFRunLoopSourceSignal(m_CFRunLoopSourceRef);
-		CFRunLoopWakeUp(m_CFRunLoopRef);
+    @Override
+    synchronized public void close() {
+        if (!m_Open)
+            throw new IllegalStateException("device not open");
 
-		if (Thread.currentThread() != m_Thread) {
-			// Notify the read thread that it can shut down now.
-			m_Thread.interrupt();
-			m_SyncShutdown.waitAndSync();
+        // Disconnect the report callback before close.
+        // according to the following link unregistering callbacks is not safe ???
+        // https://github.com/signal11/hidapi/issues/116
 
-			// Wait for the tread to close down
-			try {
-				m_Thread.join();
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
-		}
+        IOHIDDeviceRegisterInputReportCallback(m_IOHIDDeviceRef, m_InputReportBuffer, m_MaxInputReportLength, null, null);
+        IOHIDManagerRegisterDeviceRemovalCallback(MacOsXBackend.m_HidManager, null, null);
+        IOHIDDeviceUnscheduleFromRunLoop(m_IOHIDDeviceRef, m_CFRunLoopRef, m_CFRunLoopMode);
+        IOHIDDeviceScheduleWithRunLoop(m_IOHIDDeviceRef, CFRunLoopGetMain(), kCFRunLoopDefaultMode);
 
-		IOHIDDeviceClose(m_IOHIDDeviceRef, kIOHIDOptionsTypeSeizeDevice);
+        m_StopThread = true;
+        // Wake up the run thread's event loop so that the thread can exit.
+        CFRunLoopSourceSignal(m_CFRunLoopSourceRef);
+        CFRunLoopWakeUp(m_CFRunLoopRef);
 
-		if (m_CFRunLoopMode != null)
-			CFRelease(m_CFRunLoopMode);
-		if (m_CFRunLoopSourceRef != null)
-			CFRelease(m_CFRunLoopSourceRef);
+        if (Thread.currentThread() != m_Thread) {
+            // Notify the read thread that it can shut down now.
+            m_Thread.interrupt();
+            m_SyncShutdown.waitAndSync();
 
-		CFRelease(m_IOHIDDeviceRef);
+            // Wait for the tread to close down
+            try {
+                m_Thread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
 
-		m_DevFromCallback.remove(m_PerformSignalCallback);
-		m_DevFromCallback.remove(m_HidReportCallBack);
-		m_DevFromCallback.remove(m_HidDeviceRemovalCallback);
-		m_Backend.removeDevice(m_HidDeviceInfo.getDeviceId());
-		m_Open = false;
-	}
+        IOHIDDeviceClose(m_IOHIDDeviceRef, kIOHIDOptionsTypeSeizeDevice);
 
-	@Override
-	synchronized public purejavahidapi.HidDeviceInfo getHidDeviceInfo() {
-		return m_HidDeviceInfo;
-	}
+        if (m_CFRunLoopMode != null)
+            CFRelease(m_CFRunLoopMode);
+        if (m_CFRunLoopSourceRef != null)
+            CFRelease(m_CFRunLoopSourceRef);
 
+        CFRelease(m_IOHIDDeviceRef);
+
+        m_DevFromCallback.remove(m_PerformSignalCallback);
+        m_DevFromCallback.remove(m_HidReportCallBack);
+        m_DevFromCallback.remove(m_HidDeviceRemovalCallback);
+        m_Backend.removeDevice(m_HidDeviceInfo.getDeviceId());
+        m_Open = false;
+    }
+
+    @Override
+    synchronized public purejavahidapi.HidDeviceInfo getHidDeviceInfo() {
+        return m_HidDeviceInfo;
+    }
 }

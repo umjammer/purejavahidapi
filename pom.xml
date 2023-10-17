@@ -18,9 +18,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-          <encoding>UTF-8</encoding>
+          <release>17</release>
         </configuration>
       </plugin>
       <plugin>
@@ -46,6 +44,10 @@
             <goals>
               <goal>jar</goal>
             </goals>
+            <configuration>
+              <quiet>true</quiet>
+              <locale>EN</locale>
+            </configuration>
           </execution>
         </executions>
       </plugin>

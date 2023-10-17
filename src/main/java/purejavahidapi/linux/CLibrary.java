@@ -3,103 +3,106 @@ package purejavahidapi.linux;
 import java.util.Arrays;
 import java.util.List;
 
-import purejavahidapi.linux.UdevLibrary.hidraw_report_descriptor;
-
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Structure;
+import purejavahidapi.linux.UdevLibrary.hidraw_report_descriptor;
+
 
 public class CLibrary {
-	static CLibraryInterface INSTANCE = Native.load("c", CLibraryInterface.class);
 
-	public static short POLLIN = 0x0001;
-	public static int ENOENT = 2;
-	public static int EACCES = 13;
-	public static int EBUSY= 16;
+    static CLibraryInterface INSTANCE = Native.load("c", CLibraryInterface.class);
 
-	interface CLibraryInterface extends Library {
-		int open(String pathname, int flags);
+    public static short POLLIN = 0x0001;
+    public static int ENOENT = 2;
+    public static int EACCES = 13;
+    public static int EBUSY = 16;
 
-		int close(int fd);
+    interface CLibraryInterface extends Library {
 
-		int read(int fd, byte[] data, NativeLong len);
+        int open(String pathname, int flags);
 
-		int write(int fd, byte[] data, NativeLong len);
+        int close(int fd);
 
-		int ioctl(int fd, int cmd, int[] p);
+        int read(int fd, byte[] data, NativeLong len);
 
-		int ioctl(int fd, int cmd, byte[] p);
+        int write(int fd, byte[] data, NativeLong len);
 
-		int ioctl(int fd, int cmd, hidraw_report_descriptor p);
+        int ioctl(int fd, int cmd, int[] p);
 
-		int poll(pollfd[] fds, int nfds, int timeout);
+        int ioctl(int fd, int cmd, byte[] p);
 
-		int pipe(int[] fds);
-	}
+        int ioctl(int fd, int cmd, hidraw_report_descriptor p);
 
-	static public class pollfd extends Structure {
+        int poll(pollfd[] fds, int nfds, int timeout);
 
-		public static class ByReference extends pollfd implements Structure.ByReference {
-		}
+        int pipe(int[] fds);
+    }
 
-		public int fd;
-		public short events;
-		public short revents;
+    static public class pollfd extends Structure {
 
-		@Override
-		protected List<String> getFieldOrder() {
-			return Arrays.asList(//
-					"fd",//
-					"events",//
-					"revents"//
-			);
-		}
+        public static class ByReference extends pollfd implements Structure.ByReference {
 
-		public pollfd() {
-		}
+        }
 
-		public pollfd(int fd, short events, short revents) {
-			this.fd = fd;
-			this.events = events;
-			this.revents = revents;
-		}
-	}
+        public int fd;
+        public short events;
+        public short revents;
 
-	public static int open(String pathname, int flags) {
-		return INSTANCE.open(pathname, flags);
-	}
+        @Override
+        protected List<String> getFieldOrder() {
+            return Arrays.asList(//
+                    "fd",//
+                    "events",//
+                    "revents"//
+            );
+        }
 
-	public static void close(int fd) {
-		INSTANCE.close(fd);
-	}
+        public pollfd() {
+        }
 
-	public static int ioctl(int fd, int cmd, int[] p) {
-		return INSTANCE.ioctl(fd, cmd, p);
-	}
+        public pollfd(int fd, short events, short revents) {
+            this.fd = fd;
+            this.events = events;
+            this.revents = revents;
+        }
+    }
 
-	public static int ioctl(int fd, int cmd, byte[] p) {
-		return INSTANCE.ioctl(fd, cmd, p);
-	}
+    public static int open(String pathname, int flags) {
+        return INSTANCE.open(pathname, flags);
+    }
 
-	public static int ioctl(int fd, int cmd, hidraw_report_descriptor p) {
-		return INSTANCE.ioctl(fd, cmd, p);
-	}
+    public static void close(int fd) {
+        INSTANCE.close(fd);
+    }
 
-	public static int read(int fd, byte[] buffer, int len) {
-		return INSTANCE.read(fd, buffer, new NativeLong(len));
-	}
+    public static int ioctl(int fd, int cmd, int[] p) {
+        return INSTANCE.ioctl(fd, cmd, p);
+    }
 
-	public static int write(int fd, byte[] buffer, int len) {
-		return INSTANCE.write(fd, buffer, new NativeLong(len));
-	}
+    public static int ioctl(int fd, int cmd, byte[] p) {
+        return INSTANCE.ioctl(fd, cmd, p);
+    }
 
-	public static int poll(pollfd[] fds, int nfds, int timeout) {
-		return INSTANCE.poll(fds, nfds, timeout);
-	}
+    public static int ioctl(int fd, int cmd, hidraw_report_descriptor p) {
+        return INSTANCE.ioctl(fd, cmd, p);
+    }
 
-	public static int pipe(int[] fds) {
-		return INSTANCE.pipe(fds);
-	}
+    public static int read(int fd, byte[] buffer, int len) {
+        return INSTANCE.read(fd, buffer, new NativeLong(len));
+    }
+
+    public static int write(int fd, byte[] buffer, int len) {
+        return INSTANCE.write(fd, buffer, new NativeLong(len));
+    }
+
+    public static int poll(pollfd[] fds, int nfds, int timeout) {
+        return INSTANCE.poll(fds, nfds, timeout);
+    }
+
+    public static int pipe(int[] fds) {
+        return INSTANCE.pipe(fds);
+    }
 
 }
