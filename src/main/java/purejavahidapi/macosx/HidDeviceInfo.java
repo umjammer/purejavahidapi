@@ -27,29 +27,27 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  */
-package purejavahidapi;
+package purejavahidapi.macosx;
 
-/**
- * An InputReportListener gets called when a USB device is un-plugged.
- * 
- * @author nyholku
- *
- */
+import static purejavahidapi.macosx.CoreFoundationLibrary.CFSTR;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.*;
+import purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceRef;
+import static purejavahidapi.macosx.HidDevice.*;
 
-public interface DeviceRemovalListener {
-	/**
-	 * This method is called when the USB device associated with the
-	 * the HidDevice that the listener to is attached goes off line i.e.
-	 * is unplugged.
-	 * <p>
-	 * This only happens if the device is open, so this not a mechanism
-	 * to listen to device removal events in general.
-	 * <p>
-	 * The call thread from which this call is made is un-specified and
-	 * platform dependent.
-	 * 
-	 * @param source the HidDevice object that called this method
-	 */
+/* package */class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
+	private static int m_NextDeviceId = 1;
 
-	void onDeviceRemoval(HidDevice source);
+	public HidDeviceInfo(IOHIDDeviceRef dev) {
+		m_DeviceId = Integer.toString(m_NextDeviceId++);
+		m_ProductId = (short) getIntProperty(dev, CFSTR(kIOHIDProductIDKey));
+		m_VendorId = (short) getIntProperty(dev, CFSTR(kIOHIDVendorIDKey));
+		m_DevicePath = createPathForDevide(dev);
+		m_ManufactureString = getStringProperty(dev, CFSTR(kIOHIDManufacturerKey));
+		m_SerialNumberString = getStringProperty(dev, CFSTR(kIOHIDSerialNumberKey));
+		m_ProductString = getStringProperty(dev, CFSTR(kIOHIDProductKey));
+		m_ReleaseNumber = (short) getIntProperty(dev, CFSTR(kIOHIDVersionNumberKey));
+		m_UsagePage = (short) getIntProperty(dev, CFSTR(kIOHIDPrimaryUsageKey));
+
+	}
+
 }

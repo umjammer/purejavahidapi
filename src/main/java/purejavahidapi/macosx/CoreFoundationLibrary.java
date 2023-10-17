@@ -2,31 +2,32 @@
  * Copyright (c) 2014, Kustaa Nyholm / SpareTimeLabs
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, 
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
- * Redistributions of source code must retain the above copyright notice, this list 
+ * Redistributions of source code must retain the above copyright notice, this list
  * of conditions and the following disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice, this 
+ *
+ * Redistributions in binary form must reproduce the above copyright notice, this
  * list of conditions and the following disclaimer in the documentation and/or other
  * materials provided with the distribution.
- *  
- * Neither the name of the Kustaa Nyholm or SpareTimeLabs nor the names of its 
- * contributors may be used to endorse or promote products derived from this software 
+ *
+ * Neither the name of the Kustaa Nyholm or SpareTimeLabs nor the names of its
+ * contributors may be used to endorse or promote products derived from this software
  * without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  */
+
 package purejavahidapi.macosx;
 
 import java.util.Arrays;
@@ -34,14 +35,17 @@ import java.util.List;
 
 import com.sun.jna.*;
 
-//http://www.philipp.haussleiter.de/2012/09/building-native-macos-apps-with-java/
 
+/**
+ * @see "http://www.philipp.haussleiter.de/2012/09/building-native-macos-apps-with-java/"
+ */
 public class CoreFoundationLibrary {
+
 	private static String m_NativeLibName = "CoreFoundation";
 	private static CoreFoundationLibraryInterface INSTANCE = (CoreFoundationLibraryInterface) Native.load(m_NativeLibName, CoreFoundationLibraryInterface.class);
 	private static NativeLibrary NINSTANCE = NativeLibrary.getInstance(m_NativeLibName);
 
-	// --------------------------------------------------------------------------------
+	// ----
 	public static CFAllocatorRef kCFAllocatorDefault = new CFAllocator_global(NINSTANCE.getGlobalVariableAddress("kCFAllocatorDefault")).value;
 	public static CFStringRef kCFRunLoopDefaultMode = new CFStringRef_global(NINSTANCE.getGlobalVariableAddress("kCFRunLoopDefaultMode")).value;
 
@@ -66,7 +70,7 @@ public class CoreFoundationLibrary {
 		}
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public static final class CFAllocator_global extends Structure {
 		public CFAllocatorRef value;
 
@@ -82,7 +86,7 @@ public class CoreFoundationLibrary {
 		}
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public static final class CFStringRef_global extends Structure {
 		public CFStringRef value;
 
@@ -98,7 +102,7 @@ public class CoreFoundationLibrary {
 		}
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public static class CFAllocatorRef extends PointerType {
 		public CFAllocatorRef(Pointer pointer) {
 			super(pointer);
@@ -109,7 +113,7 @@ public class CoreFoundationLibrary {
 		}
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public static class CFStringRef extends PointerType {
 		public CFStringRef(Pointer pointer) {
 			super(pointer);
@@ -120,7 +124,7 @@ public class CoreFoundationLibrary {
 		}
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public static class CFSetRef extends PointerType {
 		public CFSetRef(Pointer pointer) {
 			super(pointer);
@@ -131,7 +135,7 @@ public class CoreFoundationLibrary {
 		}
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public static class CFRunLoopRef extends PointerType {
 		public CFRunLoopRef(Pointer pointer) {
 			super(pointer);
@@ -142,7 +146,7 @@ public class CoreFoundationLibrary {
 		}
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public static class CFTypeRef extends PointerType {
 		public CFTypeRef(Pointer pointer) {
 			super(pointer);
@@ -153,7 +157,7 @@ public class CoreFoundationLibrary {
 		}
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public static class CFNumber extends PointerType {
 		public CFNumber(Pointer pointer) {
 			super(pointer);
@@ -164,7 +168,7 @@ public class CoreFoundationLibrary {
 		}
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public static class CFRange extends Structure {
 		public NativeLong location;
 		public NativeLong length;
@@ -208,7 +212,7 @@ public class CoreFoundationLibrary {
 		}
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public static class CFRunLoopSourceRef extends PointerType {
 		public CFRunLoopSourceRef(Pointer pointer) {
 			super(pointer);
@@ -220,12 +224,12 @@ public class CoreFoundationLibrary {
 
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public interface CFRunLoopPerformCallBack extends com.sun.jna.Callback {
 		void callback(Pointer context);
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public static class CFArrayRef extends PointerType {
 		public CFArrayRef(Pointer pointer) {
 			super(pointer);
@@ -237,7 +241,7 @@ public class CoreFoundationLibrary {
 
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public static class CFUUID extends Structure {
 		public byte[] bytes = new byte[16];
 
@@ -249,7 +253,7 @@ public class CoreFoundationLibrary {
 		}
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public static class CFUUIDRef extends PointerType {
 		public CFUUIDRef(Pointer pointer) {
 			super(pointer);
@@ -261,33 +265,33 @@ public class CoreFoundationLibrary {
 
 	}
 
-	// --------------------------------------------------------------------------------
-	//	public static class NSMapTableValueCallBacks extends Structure {
-	//		public Pointer retain;
-	//		public Pointer release;
-	//		public Pointer describe;
-	//
-	//		@Override
-	//		protected List getFieldOrder() {
-	//			return Arrays.asList("retain", "release", "describe");
-	//		}
-	//	}
-	//		public NSMapTableValueCallBacks() {
-	//			super();
-	//		}
-	//		public NSMapTableValueCallBacks(org.rococoa.cocoa.foundation.NSMapTableValueCallBacks.retain_callback retain, org.rococoa.cocoa.foundation.NSMapTableValueCallBacks.release_callback release, org.rococoa.cocoa.foundation.NSMapTableValueCallBacks.describe_callback describe) {
-	//			super();
-	//			this.retain = retain;
-	//			this.release = release;
-	//			this.describe = describe;
-	//		}
-	//		public ByReference byReference() { return setupClone(new ByReference()); }
-	//		public ByValue byValue() { return setupClone(new ByValue()); }
-	//		public NSMapTableValueCallBacks clone() { return setupClone(new NSMapTableValueCallBacks()); }
-	//		public static class ByReference extends NSMapTableValueCallBacks implements com.sun.jna.Structure.ByReference {}
-	//		public static class ByValue extends NSMapTableValueCallBacks implements com.sun.jna.Structure.ByValue {}
+//	  /** */
+//		public static class NSMapTableValueCallBacks extends Structure {
+//			public Pointer retain;
+//			public Pointer release;
+//			public Pointer describe;
+//
+//			@Override
+//			protected List getFieldOrder() {
+//				return Arrays.asList("retain", "release", "describe");
+//			}
+//		}
+//			public NSMapTableValueCallBacks() {
+//				super();
+//			}
+//			public NSMapTableValueCallBacks(org.rococoa.cocoa.foundation.NSMapTableValueCallBacks.retain_callback retain, org.rococoa.cocoa.foundation.NSMapTableValueCallBacks.release_callback release, org.rococoa.cocoa.foundation.NSMapTableValueCallBacks.describe_callback describe) {
+//				super();
+//				this.retain = retain;
+//				this.release = release;
+//				this.describe = describe;
+//			}
+//			public ByReference byReference() { return setupClone(new ByReference()); }
+//			public ByValue byValue() { return setupClone(new ByValue()); }
+//			public NSMapTableValueCallBacks clone() { return setupClone(new NSMapTableValueCallBacks()); }
+//			public static class ByReference extends NSMapTableValueCallBacks implements com.sun.jna.Structure.ByReference {}
+//			public static class ByValue extends NSMapTableValueCallBacks implements com.sun.jna.Structure.ByValue {}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	CFRunLoopPerformCallBack perform;
 
 	public static class CFRunLoopSourceContext extends Structure {
@@ -307,7 +311,7 @@ public class CoreFoundationLibrary {
 		}
 	}
 
-	// --------------------------------------------------------------------------------
+	/** */
 	public interface CoreFoundationLibraryInterface extends Library {
 		CFRunLoopRef CFRunLoopGetCurrent();
 
@@ -359,7 +363,7 @@ public class CoreFoundationLibrary {
 
 	}
 
-	// --------------------------------------------------------------------------------
+	// ----
 
 	public static CFRunLoopRef CFRunLoopGetCurrent() {
 		return INSTANCE.CFRunLoopGetCurrent();

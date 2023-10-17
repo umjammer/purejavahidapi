@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  */
+
 package purejavahidapi;
 
 /**
@@ -36,9 +37,9 @@ package purejavahidapi;
  * This is the only means of receiving input reports.
  * <p>
  * @author nyholku
- *
  */
 public interface InputReportListener {
+
 	/**
 	 * This method gets called when an input report is received.
 	 * 

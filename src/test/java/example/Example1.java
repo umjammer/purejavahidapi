@@ -1,4 +1,5 @@
-package purejavahidapi.examples;
+package example;
+
 import java.util.List;
 
 import purejavahidapi.*;
