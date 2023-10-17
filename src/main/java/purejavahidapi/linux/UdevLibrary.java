@@ -43,7 +43,7 @@ public class UdevLibrary {
 
 	// OBSOLETE class: hid_device
 
-	static UdevInterface INSTANCE = (UdevInterface) Native.load("udev", UdevInterface.class);
+	static UdevInterface INSTANCE = Native.load("udev", UdevInterface.class);
 
 	public final static int BUS_USB = 0x03;
 	public final static int BUS_BLUETOOTH = 0x05;
@@ -81,7 +81,8 @@ public class UdevLibrary {
 		public int size;
 		public byte[] value = new byte[HID_MAX_DESCRIPTOR_SIZE];
 
-		protected List getFieldOrder() {
+		@Override
+		protected List<String> getFieldOrder() {
 			return Arrays.asList("size", "value");
 
 		}

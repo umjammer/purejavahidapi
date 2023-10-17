@@ -42,10 +42,10 @@ public final class Collection {
 		m_Parent = parent;
 		m_Usage = usage;
 		m_Type = type;
-		m_Children = new LinkedList();
+		m_Children = new LinkedList<>();
 		if (parent != null)
 			parent.m_Children.add(this);
-		m_Fields = new LinkedList();
+		m_Fields = new LinkedList<>();
 	}
 
 	void add(Field field) {

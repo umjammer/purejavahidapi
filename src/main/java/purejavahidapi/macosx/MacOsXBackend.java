@@ -37,9 +37,6 @@ import java.util.List;
 
 import com.sun.jna.Pointer;
 
-import purejavahidapi.macosx.CoreFoundationLibrary.CFSetRef;
-import purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceRef;
-import purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDManagerRef;
 import purejavahidapi.shared.Backend;
 import static purejavahidapi.macosx.HidDevice.*;
 
@@ -49,7 +46,7 @@ public class MacOsXBackend extends Backend {
 
 	@Override
 	public List<purejavahidapi.HidDeviceInfo> enumerateDevices() {
-		List<purejavahidapi.HidDeviceInfo> list = new LinkedList<purejavahidapi.HidDeviceInfo>();
+		List<purejavahidapi.HidDeviceInfo> list = new LinkedList<>();
 		processPendingEvents();
 
 		IOHIDManagerSetDeviceMatching(MacOsXBackend.m_HidManager, null);
@@ -102,6 +99,7 @@ public class MacOsXBackend extends Backend {
 		return null;
 	}
 
+	@Override
 	public void cleanup() {
 		if (m_HidManager != null) {
 			IOHIDManagerClose(m_HidManager, kIOHIDOptionsTypeNone);
@@ -111,6 +109,7 @@ public class MacOsXBackend extends Backend {
 	}
 
 	//--------------------------------------------------------------
+	@Override
 	public void init() {
 		if (m_HidManager == null) {
 			m_HidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);

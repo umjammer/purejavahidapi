@@ -103,7 +103,7 @@ public class Example2 {
 
                                 byte[] data = new byte[132];
                                 data[0] = 1;
-                                int len = 0;
+                                int len;
                                 if (((len = dev.getFeatureReport(data, data.length)) >= 0) && true) {
                                     int Id = data[0];
                                     System.out.printf("getFeatureReport: id %d len %d data ", Id, len);

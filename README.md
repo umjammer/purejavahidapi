@@ -34,7 +34,7 @@ PureJavaHidApi provides the capability to enumerate (find) and open attached USB
 
 * Ability to read and parse the report descriptors <sup>(1)</sup>
 
-* Persintent and sensical device path names for all platforms would be great!
+* Persistent and sensical device path names for all platforms would be great!
 
 <sup>(1)</sup> 
 <sub> there is a semi-decent parser in <a href="https://github.com/nyholku/purejavahidapi/tree/master/src/purejavahidapi/hidparser" target="hidparser"> purejavahidapi.hidparser </a> but the ability to read raw descriptor still eludes me.
@@ -56,7 +56,7 @@ However some device which are not really Human Interface Devices in the original
 
 It is specifically for accessing these types of devices that PureJavaHidApi is aimed for.
 
-Now why do they represent represent themselves as HID devices?
+Now why do they represent themselves as HID devices?
 
 For one overwhelming advantage over other class of USB devices: all major operating systems have built in HID drivers which means that no driver installation is required. Hard as it for a programmer to understand driver installation is a major hurdle and can make the difference between making the sale or not.
 

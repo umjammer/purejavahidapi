@@ -37,20 +37,10 @@ import com.sun.jna.*;
 import com.sun.jna.platform.win32.Cfgmgr32;
 import com.sun.jna.ptr.IntByReference;
 import purejavahidapi.shared.Backend;
-import purejavahidapi.windows.HidLibrary.*;
-import purejavahidapi.windows.SetupApiLibrary.HDEVINFO;
-import purejavahidapi.windows.SetupApiLibrary.SP_DEVICE_INTERFACE_DATA;
-import purejavahidapi.windows.SetupApiLibrary.SP_DEVINFO_DATA;
-
-import com.sun.jna.platform.win32.WinNT.HANDLE;
 
 import static com.sun.jna.platform.win32.Kernel32.INSTANCE;
-import static com.sun.jna.platform.win32.WinBase.INVALID_HANDLE_VALUE;
 import static com.sun.jna.platform.win32.Kernel32.*;
 import static com.sun.jna.platform.win32.Cfgmgr32.*;
-
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
 
 import static purejavahidapi.windows.SetupApiLibrary.*;
 import static purejavahidapi.windows.HidLibrary.*;
@@ -114,14 +104,14 @@ public class WindowsBackend extends Backend {
 	@Override
 	public List<purejavahidapi.HidDeviceInfo> enumerateDevices() {
 		try {
-			List<purejavahidapi.HidDeviceInfo> list = new LinkedList<purejavahidapi.HidDeviceInfo>();
+			List<purejavahidapi.HidDeviceInfo> list = new LinkedList<>();
 
 			GUID InterfaceClassGuid = new GUID(0x4d1e55b2, 0xf16f, 0x11cf, 0x88, 0xcb, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30);
 
 			SP_DEVINFO_DATA devinfo_data = new SP_DEVINFO_DATA();
 			SP_DEVICE_INTERFACE_DATA device_interface_data = new SP_DEVICE_INTERFACE_DATA();
 			SP_DEVICE_INTERFACE_DETAIL_DATA_A device_interface_detail_data = null;
-			HDEVINFO device_info_set = null;
+			HDEVINFO device_info_set;
 			// Initialize the Windows objects.
 			devinfo_data.cbSize = devinfo_data.size();
 			device_interface_data.cbSize = device_interface_data.size();
@@ -132,7 +122,7 @@ public class WindowsBackend extends Backend {
 			// Iterate over each device in the HID class
 
 			for (int deviceIndex = 0;; deviceIndex++) {
-				HANDLE devHandle = INVALID_HANDLE_VALUE;
+				HANDLE devHandle;
 
 				if (!SetupDiEnumDeviceInterfaces(device_info_set, null, InterfaceClassGuid, deviceIndex, device_interface_data)) {
 					if (INSTANCE.GetLastError() == ERROR_NO_MORE_ITEMS)
@@ -149,15 +139,15 @@ public class WindowsBackend extends Backend {
 				// get the device path
 				int[] cbSize = { 8, 6, 5 }; // horrible hack here, because it is not easy to know what cbSize is we try them
 											// all
-				for (int i = 0; i < cbSize.length; i++) {
-					device_interface_detail_data = new SP_DEVICE_INTERFACE_DETAIL_DATA_A(cbSize[i], required_size[0]);
-					if (SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, device_interface_detail_data, required_size[0], null, null))
-						break; // ok, we guessed right so we can move on
-					device_interface_detail_data = null;
-					if (INSTANCE.GetLastError() == ERROR_INVALID_USER_BUFFER)
-						continue; // guessed from, try again with next value
-					reportLastError(); // something else went wrong, report it
-				}
+                for (int j : cbSize) {
+                    device_interface_detail_data = new SP_DEVICE_INTERFACE_DETAIL_DATA_A(j, required_size[0]);
+                    if (SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, device_interface_detail_data, required_size[0], null, null))
+                        break; // ok, we guessed right so we can move on
+                    device_interface_detail_data = null;
+                    if (INSTANCE.GetLastError() == ERROR_INVALID_USER_BUFFER)
+                        continue; // guessed from, try again with next value
+                    reportLastError(); // something else went wrong, report it
+                }
 				if (device_interface_detail_data == null)
 					continue; // this should never happen, but let's ignore it if it happens so that the
 								// enumeration will not totally fail
@@ -203,7 +193,7 @@ public class WindowsBackend extends Backend {
 							reportLastError();
 						int parentIdLen = iParentIdLen.getValue() + 1;
 
-						Memory mIdChars = new Memory(parentIdLen * 2);
+						Memory mIdChars = new Memory(parentIdLen * 2L);
 						if (Cfgmgr32.INSTANCE.CM_Get_Device_ID(parent, mIdChars, parentIdLen, 0) != CR_SUCCESS)
 							reportLastError();
 						String parentId = mIdChars.getString(0);

@@ -36,7 +36,6 @@ import java.nio.file.AccessDeniedException;
 import com.sun.jna.Native;
 
 import purejavahidapi.*;
-import purejavahidapi.linux.UdevLibrary.*;
 import purejavahidapi.shared.SyncPoint;
 import static purejavahidapi.linux.UdevLibrary.*;
 import static purejavahidapi.linux.CLibrary.*;
@@ -106,16 +105,13 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_SyncStart = new SyncPoint(2);
 		m_SyncShutdown = new SyncPoint(2);
 
-		m_Thread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					runReadOnBackground();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}, m_HidDeviceInfo.getPath());
+		m_Thread = new Thread(() -> {
+            try {
+                runReadOnBackground();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, m_HidDeviceInfo.getPath());
 		m_Backend.addDevice(m_HidDeviceInfo.getDeviceId(), this);
 		m_Open = true;
 		m_Thread.setDaemon(true);
@@ -307,8 +303,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 					data_len = 0;
 					break;
 				}
-				;
-				key_size = 1;
+                key_size = 1;
 			}
 
 			// Skip over this key and it's associated data
@@ -321,6 +316,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		return false;
 	}
 
+	@Override
 	public DeviceRemovalListener getDeviceRemovalListener() {
 		return m_DeviceRemovalListener;
 	}

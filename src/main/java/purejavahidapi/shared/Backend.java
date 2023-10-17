@@ -10,7 +10,7 @@ import purejavahidapi.HidDeviceInfo;
 
 abstract public class Backend {
 	// FIXME all this backend stuff is not part of the public API so it should have some access restrictions
-	private HashMap<String, HidDevice> m_OpenDevices = new HashMap<String, HidDevice>();
+	private HashMap<String, HidDevice> m_OpenDevices = new HashMap<>();
 
 	public abstract void init();
 

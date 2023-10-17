@@ -34,7 +34,6 @@ import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
 import com.sun.jna.Pointer;
 import com.sun.jna.win32.StdCallLibrary;
-import com.sun.jna.win32.W32APIOptions;
 
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.platform.win32.WinDef.HMODULE;
@@ -121,7 +120,8 @@ public class Kernel32Library {
 	}
 
 	public static class Kernel32InterfaceWithDirectMapping implements Kernel32Interface {
-		native public HANDLE CreateFile(String name, int access, int mode, SECURITY_ATTRIBUTES security, int create, int atteribs, Pointer template) throws LastErrorException;
+		@Override
+        native public HANDLE CreateFile(String name, int access, int mode, SECURITY_ATTRIBUTES security, int create, int atteribs, Pointer template) throws LastErrorException;
 
 		native public boolean WriteFile(HANDLE hFile, byte[] buf, int wrn, int[] nwrtn, Pointer lpOverlapped) throws LastErrorException;
 
@@ -135,33 +135,44 @@ public class Kernel32Library {
 
 		native public boolean PurgeComm(HANDLE hFile, int qmask) throws LastErrorException;
 
-		native public boolean CancelIo(HANDLE hFile) throws LastErrorException;
+		@Override
+        native public boolean CancelIo(HANDLE hFile) throws LastErrorException;
 
-		native public boolean CloseHandle(HANDLE hFile) throws LastErrorException;
+		@Override
+        native public boolean CloseHandle(HANDLE hFile) throws LastErrorException;
 
-		native public HANDLE CreateEvent(SECURITY_ATTRIBUTES lpEventAttributes, boolean bManualReset, boolean bInitialState, String lpName) throws LastErrorException;
+		@Override
+        native public HANDLE CreateEvent(SECURITY_ATTRIBUTES lpEventAttributes, boolean bManualReset, boolean bInitialState, String lpName) throws LastErrorException;
 
-		native public boolean ResetEvent(HANDLE hEvent) throws LastErrorException;
+		@Override
+        native public boolean ResetEvent(HANDLE hEvent) throws LastErrorException;
 
 		native public boolean SetEvent(HANDLE hEvent) throws LastErrorException;
 
-		native public int WaitForSingleObject(HANDLE hHandle, int dwMilliseconds);
+		@Override
+        native public int WaitForSingleObject(HANDLE hHandle, int dwMilliseconds);
 
 		native public boolean GetOverlappedResult(HANDLE hFile, Pointer lpOverlapped, int[] lpNumberOfBytesTransferred, boolean bWait) throws LastErrorException;
 
 		native public int FormatMessageW(int flags, Pointer src, int msgId, int langId, Pointer dst, int sze, Pointer va_list);
 
-		native public boolean CancelIoEx(HANDLE hFile, OVERLAPPED lpOverlapped);
+		@Override
+        native public boolean CancelIoEx(HANDLE hFile, OVERLAPPED lpOverlapped);
 
-		native public boolean WriteFile(HANDLE hFile, Pointer buf, int wrn, int[] nwrtn, OVERLAPPED lpOverlapped);
+		@Override
+        native public boolean WriteFile(HANDLE hFile, Pointer buf, int wrn, int[] nwrtn, OVERLAPPED lpOverlapped);
 
-		native public boolean ReadFile(HANDLE hFile, Pointer buf, int rdn, int[] nrd, OVERLAPPED lpOverlapped);
+		@Override
+        native public boolean ReadFile(HANDLE hFile, Pointer buf, int rdn, int[] nrd, OVERLAPPED lpOverlapped);
 
-		native public boolean GetOverlappedResult(HANDLE hFile, OVERLAPPED lpOverlapped, int[] lpNumberOfBytesTransferred, boolean bWait);
+		@Override
+        native public boolean GetOverlappedResult(HANDLE hFile, OVERLAPPED lpOverlapped, int[] lpNumberOfBytesTransferred, boolean bWait);
 
-		native public HMODULE GetModuleHandle(String name);
+		@Override
+        native public HMODULE GetModuleHandle(String name);
 
-		native public boolean DeviceIoControl(HANDLE hDevice, int dwIoControlCode, Pointer lpInBuffer, int nInBufferSize, Pointer lpOutBuffer, int nOutBufferSize, int[] lpBytesReturned, OVERLAPPED lpOverlapped);
+		@Override
+        native public boolean DeviceIoControl(HANDLE hDevice, int dwIoControlCode, Pointer lpInBuffer, int nInBufferSize, Pointer lpOutBuffer, int nOutBufferSize, int[] lpBytesReturned, OVERLAPPED lpOverlapped);
 	}
 
 	public static HANDLE CreateFile(String name, int access, int sharing, SECURITY_ATTRIBUTES security, int create, int attribs, Pointer template) {

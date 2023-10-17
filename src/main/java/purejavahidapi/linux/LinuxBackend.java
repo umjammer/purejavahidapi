@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Properties;
 
 import purejavahidapi.linux.CLibrary.pollfd;
-import purejavahidapi.linux.UdevLibrary.udev;
 import purejavahidapi.shared.Backend;
 import static purejavahidapi.linux.CLibrary.POLLIN;
 import static purejavahidapi.linux.CLibrary.poll;
@@ -52,7 +51,7 @@ public class LinuxBackend extends Backend {
 			if (udev == null)
 				throw new Exception("udev_new returned null");
 
-			final udev_monitor udev_monitor = udev_monitor_new_from_netlink(udev, "udev");
+			udev_monitor udev_monitor = udev_monitor_new_from_netlink(udev, "udev");
 			if (udev_monitor == null)
 				throw new Exception("udev_monitor returned null");
 
@@ -62,35 +61,31 @@ public class LinuxBackend extends Backend {
 			if (udev_monitor_enable_receiving(udev_monitor) < 0)
 				throw new Exception("udev_monitor_enable_receiving failed");
 
-			final int udev_monitor_fd = udev_monitor_get_fd(udev_monitor);
+			int udev_monitor_fd = udev_monitor_get_fd(udev_monitor);
 			//udev_unref(udev);
 
-			Thread removalHandler = new Thread(new Runnable() {
+			Thread removalHandler = new Thread(() -> {
+                try {
+                    while (true) {
 
-				@Override
-				public void run() {
-					try {
-						while (true) {
+                        pollfd[] pfds = (pollfd[]) (new pollfd().toArray(1));
+                        pfds[0].fd = udev_monitor_fd;
+                        pfds[0].events = POLLIN;
 
-							pollfd[] pfds = (pollfd[]) (new pollfd().toArray(1));
-							pfds[0].fd = udev_monitor_fd;
-							pfds[0].events = POLLIN;
+                        int pollres = poll(pfds, 1, -1);
 
-							int pollres = poll(pfds, 1, -1);
+                        if (pollres > 0) {
+                            udev_device dev = udev_monitor_receive_device(udev_monitor);
+                            String action = udev_device_get_action(dev);
+                            if ("remove".equals(action))
+                                deviceRemoved(udev_device_get_devnode(dev));
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
-							if (pollres > 0) {
-								udev_device dev = udev_monitor_receive_device(udev_monitor);
-								String action = udev_device_get_action(dev);
-								if ("remove".equals(action))
-									deviceRemoved(udev_device_get_devnode(dev));
-							}
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-
-				}
-			});
+            });
 			removalHandler.setDaemon(true);
 			removalHandler.start();
 
@@ -107,7 +102,7 @@ public class LinuxBackend extends Backend {
 	@Override
 	public List<purejavahidapi.HidDeviceInfo> enumerateDevices() {
 
-		List<purejavahidapi.HidDeviceInfo> list = new LinkedList<purejavahidapi.HidDeviceInfo>();
+		List<purejavahidapi.HidDeviceInfo> list = new LinkedList<>();
 
 		udev_enumerate enumerate;
 		udev_list_entry devices;
@@ -128,7 +123,7 @@ public class LinuxBackend extends Backend {
 			udev_device hid_dev = udev_device_get_parent_with_subsystem_devtype(raw_dev, "hid", null);
 
 			if (hid_dev == null)
-				continue loop;
+				continue;
 
 			try {
 				Properties p = new Properties();
@@ -140,7 +135,7 @@ public class LinuxBackend extends Backend {
 				short pid = (short) Long.parseLong(hidId[2], 16);
 
 				if (bus != BUS_USB && bus != BUS_BLUETOOTH)
-					continue loop;
+					continue;
 
 				HidDeviceInfo info = new HidDeviceInfo(sysfs_path);
 				list.add(info);

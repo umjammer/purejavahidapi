@@ -52,8 +52,8 @@ import purejavahidapi.linux.UdevLibrary.udev_device;
 		m_DevicePath = sysfs_path;
 		udev_device raw_dev = null;
 		udev udev = null;
-		udev_device hid_dev=null;
-		udev_device usb_dev=null;
+		udev_device hid_dev;
+		udev_device usb_dev;
 		try {
 			udev = udev_new();
 
@@ -89,32 +89,30 @@ import purejavahidapi.linux.UdevLibrary.udev_device;
 
 			switch (bus) {
 				case BUS_USB:
-					/*
-					 * The device pointed to by raw_dev contains information
-					 * about the hidraw device. In order to get information
-					 * about the USB device, get the parent device with the
-					 * subsystem/devtype pair of "usb"/"usb_device". This will
-					 * be several levels up the tree, but the function will find
-					 * it.
-					 */
+					// The device pointed to by raw_dev contains information
+					// about the hidraw device. In order to get information
+					// about the USB device, get the parent device with the
+					// subsystem/devtype pair of "usb"/"usb_device". This will
+					// be several levels up the tree, but the function will find
+					// it.
 					if (usb_dev == null)
 						throw new IOException("usb_dev == null");
 
-					/* Get a handle to the interface's udev node. */
+					// Get a handle to the interface's udev node.
 					udev_device intf_dev = udev_device_get_parent_with_subsystem_devtype(raw_dev, "usb", "usb_interface");
 					if (intf_dev != null) {
 						String str = udev_device_get_sysattr_value(intf_dev, "bInterfaceNumber");
-						// cur_dev->interface_number = (str)?
-						// strtol(str, NULL, 16): -1;
+						//cur_dev->interface_number = (str)?
+						//strtol(str, NULL, 16): -1;
 					}
 
 					break;
 
 				case BUS_BLUETOOTH:
-					/* Manufacturer and Product strings */
-					// cur_dev->manufacturer_string = wcsdup(L"");
-					// cur_dev->product_string =
-					// utf8_to_wchar_t(product_name_utf8);
+					// Manufacturer and Product strings
+					//cur_dev->manufacturer_string = wcsdup(L"");
+					//cur_dev->product_string =
+					//utf8_to_wchar_t(product_name_utf8);
 
 					break;
 

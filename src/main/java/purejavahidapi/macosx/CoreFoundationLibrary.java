@@ -31,6 +31,7 @@
 package purejavahidapi.macosx;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.sun.jna.*;
@@ -42,7 +43,7 @@ import com.sun.jna.*;
 public class CoreFoundationLibrary {
 
 	private static String m_NativeLibName = "CoreFoundation";
-	private static CoreFoundationLibraryInterface INSTANCE = (CoreFoundationLibraryInterface) Native.load(m_NativeLibName, CoreFoundationLibraryInterface.class);
+	private static CoreFoundationLibraryInterface INSTANCE = Native.load(m_NativeLibName, CoreFoundationLibraryInterface.class);
 	private static NativeLibrary NINSTANCE = NativeLibrary.getInstance(m_NativeLibName);
 
 	// ----
@@ -82,7 +83,7 @@ public class CoreFoundationLibrary {
 
 		@Override
 		protected List<String> getFieldOrder() {
-			return Arrays.asList("value");
+			return Collections.singletonList("value");
 		}
 	}
 
@@ -98,7 +99,7 @@ public class CoreFoundationLibrary {
 
 		@Override
 		protected List<String> getFieldOrder() {
-			return Arrays.asList("value");
+			return Collections.singletonList("value");
 		}
 	}
 
@@ -245,8 +246,9 @@ public class CoreFoundationLibrary {
 	public static class CFUUID extends Structure {
 		public byte[] bytes = new byte[16];
 
+		@Override
 		protected List<String> getFieldOrder() {
-			return Arrays.asList("bytes");
+			return Collections.singletonList("bytes");
 		}
 
 		public static class ByValue extends CFUUID implements Structure.ByValue {
@@ -306,6 +308,7 @@ public class CoreFoundationLibrary {
 		public Pointer cancel;
 		public CFRunLoopPerformCallBack perform;
 
+		@Override
 		protected List<String> getFieldOrder() {
 			return Arrays.asList("version", "info", "retain", "release", "copyDescription", "equal", "hash", "schedule", "cancel", "perform");
 		}

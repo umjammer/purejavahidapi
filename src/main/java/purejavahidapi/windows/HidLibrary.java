@@ -43,7 +43,7 @@ import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 
 public class HidLibrary {
-	static HidLibraryInterface INSTANCE = (HidLibraryInterface) Native.load("hid", HidLibraryInterface.class);
+	static HidLibraryInterface INSTANCE = Native.load("hid", HidLibraryInterface.class);
 
 	static public class HIDP_PREPARSED_DATA extends PointerType {
 	}
@@ -84,9 +84,9 @@ public class HidLibrary {
 		protected List<String> getFieldOrder() {
 			return Arrays.asList("Size", "VendorID", "ProductID", "VersionNumber");
 		}
-	};
+	}
 
-	public static class HIDP_VALUE_CAPS_Range extends Structure {
+    public static class HIDP_VALUE_CAPS_Range extends Structure {
 		public short UsageMin;
 		public short UsageMax;
 		public short StringMin;
@@ -96,6 +96,7 @@ public class HidLibrary {
 		public short DataIndexMin;
 		public short DataIndexMax;
 
+		@Override
 		protected List<String> getFieldOrder() {
 			return Arrays.asList(//
 					"UsageMin", //
@@ -120,6 +121,7 @@ public class HidLibrary {
 		public short DataIndex;
 		public short Reserved4;
 
+		@Override
 		protected List<String> getFieldOrder() {
 			return Arrays.asList(//
 					"Usage", //
@@ -329,9 +331,9 @@ public class HidLibrary {
 					"fields_not_used_by_hidapi"//
 			);
 		}
-	};
+	}
 
-	public interface HidLibraryInterface extends StdCallLibrary {
+    public interface HidLibraryInterface extends StdCallLibrary {
 		boolean HidD_GetAttributes(HANDLE HidDeviceObject, HIDD_ATTRIBUTES Attributes);
 
 		boolean HidD_GetPreparsedData(HANDLE HidDeviceObject, HIDP_PREPARSED_DATA[] PreparsedData);

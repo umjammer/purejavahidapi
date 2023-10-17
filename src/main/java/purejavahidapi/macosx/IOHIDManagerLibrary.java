@@ -35,12 +35,10 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
-import purejavahidapi.macosx.CoreFoundationLibrary.CFArrayRef;
-
 import com.sun.jna.*;
 
 public class IOHIDManagerLibrary {
-	private static IOHIDManagerLib INSTANCE = (IOHIDManagerLib) Native.load("IOKit", IOHIDManagerLib.class);
+	private static IOHIDManagerLib INSTANCE = Native.load("IOKit", IOHIDManagerLib.class);
 
 	public static final int kIOHIDOptionsTypeNone = 0;
 	public static final int kIOHIDOptionsTypeSeizeDevice = 1;
@@ -286,19 +284,19 @@ public class IOHIDManagerLibrary {
 		public short version;
 		public short revision;
 
-		public static interface QueryInterfaceCallback extends Callback {
+		public interface QueryInterfaceCallback extends Callback {
 			int f(Pointer thisPointer, CFUUID.ByValue refid, Pointer ppv);
 		}
 
-		public static interface AddRefCallback extends Callback {
+		public interface AddRefCallback extends Callback {
 			void f(Pointer thisPointer);
 		}
 
-		public static interface ReleaseCallback extends Callback {
+		public interface ReleaseCallback extends Callback {
 			void f(Pointer thisPointer);
 		}
 
-		public static interface DeviceRequestCallback extends Callback {
+		public interface DeviceRequestCallback extends Callback {
 			int f(Pointer thisPointer, IOUSBDevRequest ppv);
 		}
 
@@ -349,23 +347,23 @@ public class IOHIDManagerLibrary {
 		public DummyCallback DeviceRequestAsync;//	    IOReturn (*DeviceRequestAsync)(void *self, IOUSBDevRequest *req, IOAsyncCallback1 callback, void *refCon);
 		public DummyCallback CreateInterfaceIterator;//	    IOReturn (*CreateInterfaceIterator)(void *self, IOUSBFindInterfaceRequest *req, io_iterator_t *iter);
 
-		public static interface DummyCallback extends Callback {
+		public interface DummyCallback extends Callback {
 			void f();
 		}
 
-		public static interface QueryInterfaceCallback extends Callback {
+		public interface QueryInterfaceCallback extends Callback {
 			int f(Pointer thisPointer, CFUUID.ByValue refid, Pointer ppv);
 		}
 
-		public static interface AddRefCallback extends Callback {
+		public interface AddRefCallback extends Callback {
 			void f(Pointer thisPointer);
 		}
 
-		public static interface ReleaseCallback extends Callback {
+		public interface ReleaseCallback extends Callback {
 			void f(Pointer thisPointer);
 		}
 
-		public static interface DeviceRequestCallback extends Callback {
+		public interface DeviceRequestCallback extends Callback {
 			int f(Pointer thisPointer, IOUSBDevRequest ppv);
 		}
 

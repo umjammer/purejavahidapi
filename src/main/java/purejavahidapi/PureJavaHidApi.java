@@ -43,7 +43,7 @@ import com.sun.jna.Platform;
  * Static methods in PureJavaHidApi allow enumeration and opening of HID
  * devices.
  * <p>
- * {@link #enumerateDevices()} method returns a iist of HidDeviceInfo
+ * {@link #enumerateDevices()} method returns a list of HidDeviceInfo
  * objects from which a device path can be obtained. The path can be passed to
  * the {@link #openDevice(HidDeviceInfo path)} method to obtain a {@link HidDevice} object
  * which can then be used to communicate with the device.
@@ -53,9 +53,9 @@ import com.sun.jna.Platform;
  */
 
 public class PureJavaHidApi {
-	private static Object m_Mutex = new Object();
+	private static final Object m_Mutex = new Object();
 	final private static Backend m_Backend;
-	private static LinkedList<HidDevice> m_OpenDevices = new LinkedList();
+	private static LinkedList<HidDevice> m_OpenDevices = new LinkedList<>();
 
 	/**
 	 * 
@@ -68,7 +68,7 @@ public class PureJavaHidApi {
 	/**
 	 * Returns a list of available USB HID devices.
 	 * <p>
-	 * Passing a 0 for the vendorId or productId macthes everything and thus
+	 * Passing a 0 for the vendorId or productId matches everything and thus
 	 * works as a wild card for matching. Passing 0 for both will return a list
 	 * of all USB HID devices.
 	 * 

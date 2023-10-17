@@ -11,7 +11,7 @@ import com.sun.jna.NativeLong;
 import com.sun.jna.Structure;
 
 public class CLibrary {
-	static CLibraryInterface INSTANCE = (CLibraryInterface) Native.load("c", CLibraryInterface.class);
+	static CLibraryInterface INSTANCE = Native.load("c", CLibraryInterface.class);
 
 	public static short POLLIN = 0x0001;
 	public static int ENOENT = 2;
@@ -35,7 +35,7 @@ public class CLibrary {
 
 		int poll(pollfd[] fds, int nfds, int timeout);
 
-		public int pipe(int[] fds);
+		int pipe(int[] fds);
 	}
 
 	static public class pollfd extends Structure {
@@ -48,7 +48,7 @@ public class CLibrary {
 		public short revents;
 
 		@Override
-		protected List getFieldOrder() {
+		protected List<String> getFieldOrder() {
 			return Arrays.asList(//
 					"fd",//
 					"events",//
@@ -94,7 +94,7 @@ public class CLibrary {
 		return INSTANCE.write(fd, buffer, new NativeLong(len));
 	}
 
-	public static int poll(pollfd fds[], int nfds, int timeout) {
+	public static int poll(pollfd[] fds, int nfds, int timeout) {
 		return INSTANCE.poll(fds, nfds, timeout);
 	}
 

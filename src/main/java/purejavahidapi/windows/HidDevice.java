@@ -35,13 +35,11 @@ import static purejavahidapi.windows.SetupApiLibrary.*;
 
 import com.sun.jna.Memory;
 import com.sun.jna.NativeLong;
-import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.WinBase.OVERLAPPED;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 
 import purejavahidapi.shared.SyncPoint;
-import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
-import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
+
 
 public class HidDevice extends purejavahidapi.HidDevice {
 	private int INPUT = 0;
@@ -68,49 +66,49 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	/* package */ HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, WindowsBackend backend) {
 		String[] paths = deviceInfo.getPath().split(HidDeviceInfo.SEPARATOR);
 
-		for (int i = 0; i < paths.length; i++) {
+        for (String path : paths) {
 
-			HANDLE handle = backend.openDeviceHandle(paths[i], false);
+            HANDLE handle = WindowsBackend.openDeviceHandle(path, false);
 
-			if (handle == INVALID_HANDLE_VALUE)
-				return;
+            if (handle == INVALID_HANDLE_VALUE)
+                return;
 
-			m_Backend = backend;
-			HIDD_ATTRIBUTES attrib = new HIDD_ATTRIBUTES();
-			attrib.Size = new NativeLong(attrib.size());
-			HidD_GetAttributes(handle, attrib);
-			m_HidDeviceInfo = (HidDeviceInfo) deviceInfo;
-			boolean res;
-			HIDP_PREPARSED_DATA[] ppd = new HIDP_PREPARSED_DATA[1];
-			res = HidD_GetPreparsedData(handle, ppd);
-			if (!res) {
-				CloseHandle(handle);
-				return;
-			}
-			HIDP_CAPS caps = new HIDP_CAPS();
-			int nt_res = HidP_GetCaps(ppd[0], caps);
-			if (nt_res != HIDP_STATUS_SUCCESS) {
-				CloseHandle(handle);
-				return;
-			}
-			if (caps.InputReportByteLength > 0) {
-				m_ReportLength[INPUT] = caps.InputReportByteLength;
-				m_Buffer[INPUT] = new Memory(m_ReportLength[INPUT] + 1);
-				m_InputReportBytes = new byte[m_ReportLength[INPUT] + 1];
-				m_Handles[INPUT] = handle;
-			}
-			if (caps.OutputReportByteLength > 0) {
-				m_ReportLength[OUTPUT] = caps.OutputReportByteLength;
-				m_Buffer[OUTPUT] = new Memory(m_ReportLength[OUTPUT] + 1);
-				m_Handles[OUTPUT] = handle;
-			}
-			if (caps.FeatureReportByteLength > 0) {
-				m_ReportLength[FEATURE] = caps.FeatureReportByteLength;
-				m_Buffer[FEATURE] = new Memory(m_ReportLength[FEATURE] + 1);
-				m_Handles[FEATURE] = handle;
-			}
-			HidD_FreePreparsedData(ppd[0]);
-		}
+            m_Backend = backend;
+            HIDD_ATTRIBUTES attrib = new HIDD_ATTRIBUTES();
+            attrib.Size = new NativeLong(attrib.size());
+            HidD_GetAttributes(handle, attrib);
+            m_HidDeviceInfo = deviceInfo;
+            boolean res;
+            HIDP_PREPARSED_DATA[] ppd = new HIDP_PREPARSED_DATA[1];
+            res = HidD_GetPreparsedData(handle, ppd);
+            if (!res) {
+                CloseHandle(handle);
+                return;
+            }
+            HIDP_CAPS caps = new HIDP_CAPS();
+            int nt_res = HidP_GetCaps(ppd[0], caps);
+            if (nt_res != HIDP_STATUS_SUCCESS) {
+                CloseHandle(handle);
+                return;
+            }
+            if (caps.InputReportByteLength > 0) {
+                m_ReportLength[INPUT] = caps.InputReportByteLength;
+                m_Buffer[INPUT] = new Memory(m_ReportLength[INPUT] + 1);
+                m_InputReportBytes = new byte[m_ReportLength[INPUT] + 1];
+                m_Handles[INPUT] = handle;
+            }
+            if (caps.OutputReportByteLength > 0) {
+                m_ReportLength[OUTPUT] = caps.OutputReportByteLength;
+                m_Buffer[OUTPUT] = new Memory(m_ReportLength[OUTPUT] + 1);
+                m_Handles[OUTPUT] = handle;
+            }
+            if (caps.FeatureReportByteLength > 0) {
+                m_ReportLength[FEATURE] = caps.FeatureReportByteLength;
+                m_Buffer[FEATURE] = new Memory(m_ReportLength[FEATURE] + 1);
+                m_Handles[FEATURE] = handle;
+            }
+            HidD_FreePreparsedData(ppd[0]);
+        }
 
 		for (int i = 0; i < 3; i++) {
 			m_Overlapped[i] = new OVERLAPPED();
@@ -123,16 +121,13 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_SyncStart = new SyncPoint(2);
 		m_SyncShutdown = new SyncPoint(2);
 
-		m_Thread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					runReadOnBackground();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}, m_HidDeviceInfo.getPath());
+		m_Thread = new Thread(() -> {
+            try {
+                runReadOnBackground();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, m_HidDeviceInfo.getPath());
 		m_Backend.addDevice(m_HidDeviceInfo.getDeviceId(), this);
 		m_Open = true;
 		if (m_ReportLength[INPUT] > 0) {
@@ -164,7 +159,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		if (m_ReportLength[OUTPUT] <= 0)
-			throw new IllegalArgumentException("this device supportst no output reports");
+			throw new IllegalArgumentException("this device supports no output reports");
 		// In Windows writeFile() to HID device data has to be preceded with the report
 		// number, regardless
 		m_Buffer[OUTPUT].write(0, new byte[] { reportId }, 0, 1);
@@ -223,7 +218,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 			if (!GetOverlappedResult(m_Handles[FEATURE], m_Overlapped[FEATURE], m_Transfrd[FEATURE], true/* wait */))
 				return -1;
-			m_Buffer[FEATURE].read((long) 1, data, 0, m_Transfrd[FEATURE][0]);
+			m_Buffer[FEATURE].read(1, data, 0, m_Transfrd[FEATURE][0]);
 			return m_Transfrd[FEATURE][0];
 		}
 		return -1; // Eclipse says this is unreachable (it is), but won't compile without it ... go
@@ -231,6 +226,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 	}
 
+	@Override
 	synchronized public int getFeatureReport(int reportId, byte[] data, int length) {
 		return getFeatureReport((byte) reportId, data, length);
 	}
@@ -253,7 +249,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 			if (!GetOverlappedResult(m_Handles[FEATURE], m_Overlapped[FEATURE], m_Transfrd[FEATURE], true/* wait */))
 				return -1;
-			m_Buffer[FEATURE].read((long) 1, data, 0, m_Transfrd[FEATURE][0]);
+			m_Buffer[FEATURE].read(1, data, 0, m_Transfrd[FEATURE][0]);
 			return m_Transfrd[FEATURE][0];
 		}
 		return -1; // Eclipse says this is unreachable (it is), but won't compile without it ... go
@@ -267,7 +263,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			m_Transfrd[INPUT][0] = 0;
 			// KOE ResetEvent(m_ReportOverlapped.hEvent);
 
-			// In Windos ReadFile() from a HID device Windows expects us to attempt to read
+			// In Windows ReadFile() from a HID device Windows expects us to attempt to read
 			// as much bytes as there are
 			// in the longest report plus one for the report number (even if not used) and
 			// the data is always

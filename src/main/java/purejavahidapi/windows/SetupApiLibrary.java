@@ -33,7 +33,7 @@ package purejavahidapi.windows;
 // W32APIOptions.UNICODE_OPTIONS
 // TODO should we add get listener functions
 
-// HID descritor parsing 
+// HID descriptor parsing
 // http://msdn.microsoft.com/en-us/library/windows/hardware/ff538731(v=vs.85).aspx
 
 // getting top level collections
@@ -131,7 +131,7 @@ import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.platform.win32.WinDef.HWND;
 
 public class SetupApiLibrary {
-	static SetupApiInterface INSTANCE = (SetupApiInterface) Native.load("setupapi", SetupApiInterface.class,
+	static SetupApiInterface INSTANCE = Native.load("setupapi", SetupApiInterface.class,
 			W32APIOptions.UNICODE_OPTIONS);
 
 	public static final int DIGCF_PRESENT = 2;
@@ -198,9 +198,9 @@ public class SetupApiLibrary {
 
 		}
 
-	};
+	}
 
-	public static class SP_DEVINFO_DATA extends Structure {
+    public static class SP_DEVINFO_DATA extends Structure {
 		public int cbSize;
 		public GUID ClassGuid;
 		public int DevInst;
@@ -210,9 +210,9 @@ public class SetupApiLibrary {
 		protected List<String> getFieldOrder() {
 			return Arrays.asList("cbSize", "ClassGuid", "DevInst", "Reserved");
 		}
-	};
+	}
 
-	public static class SP_DEVICE_INTERFACE_DATA extends Structure {
+    public static class SP_DEVICE_INTERFACE_DATA extends Structure {
 		public int cbSize;
 		public GUID InterfaceClassGuid;
 		public int Flags;
@@ -222,9 +222,9 @@ public class SetupApiLibrary {
 		protected List<String> getFieldOrder() {
 			return Arrays.asList("cbSize", "InterfaceClassGuid", "Flags", "Reserved");
 		}
-	};
+	}
 
-	final static int ANYSIZE_ARRAY = 1;
+    final static int ANYSIZE_ARRAY = 1;
 
 	static public class SP_DEVICE_INTERFACE_DETAIL_DATA_A extends Structure {
 		public int cbSize = Native.POINTER_SIZE == 8 ? 8 : 5; // Note 1
@@ -249,9 +249,9 @@ public class SetupApiLibrary {
 		protected List<String> getFieldOrder() {
 			return Arrays.asList("cbSize", "DevicePath");
 		}
-	};
+	}
 
-	public static class HDEVINFO extends HANDLE {
+    public static class HDEVINFO extends HANDLE {
 
 		public HDEVINFO() {
 
@@ -260,9 +260,9 @@ public class SetupApiLibrary {
 		public HDEVINFO(Pointer ptr) {
 			super(ptr);
 		}
-	};
+	}
 
-	final static int HIDP_STATUS_SUCCESS = 0x110000;
+    final static int HIDP_STATUS_SUCCESS = 0x110000;
 
 	public interface SetupApiInterface extends Library {
 		HDEVINFO SetupDiCreateDeviceInfoList(GUID ClassGuid, HWND hwndParent);

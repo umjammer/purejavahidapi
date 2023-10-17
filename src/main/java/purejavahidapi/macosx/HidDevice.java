@@ -29,8 +29,8 @@
  */
 package purejavahidapi.macosx;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Hashtable;
 
 import static purejavahidapi.macosx.CoreFoundationLibrary.*;
@@ -39,7 +39,6 @@ import static purejavahidapi.macosx.IOHIDManagerLibrary.*;
 import com.sun.jna.*;
 
 import purejavahidapi.*;
-import purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceRef;
 import purejavahidapi.shared.SyncPoint;
 
 public class HidDevice extends purejavahidapi.HidDevice {
@@ -64,7 +63,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	private HidDeviceRemovalCallback m_HidDeviceRemovalCallback;
 	private PerformSignalCallback m_PerformSignalCallback;
 
-	private static Hashtable<Callback, HidDevice> m_DevFromCallback = new Hashtable<Callback, HidDevice>();
+	private static Hashtable<Callback, HidDevice> m_DevFromCallback = new Hashtable<>();
 
 	Pointer asPointerForPassingToCallback() {
 		return new Pointer(m_InternalId);
@@ -101,48 +100,45 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 		IOHIDManagerRegisterDeviceRemovalCallback(MacOsXBackend.m_HidManager, m_HidDeviceRemovalCallback, asPointerForPassingToCallback());
 
-		m_Thread = new Thread(new Runnable() {
-			@Override
-			public void run() {
+		m_Thread = new Thread(() -> {
 
-				// Move the device's run loop to this thread.
-				IOHIDDeviceScheduleWithRunLoop(m_IOHIDDeviceRef, CFRunLoopGetCurrent(), m_CFRunLoopMode);
+            // Move the device's run loop to this thread.
+            IOHIDDeviceScheduleWithRunLoop(m_IOHIDDeviceRef, CFRunLoopGetCurrent(), m_CFRunLoopMode);
 
-				// RunLoopSource is used to signal the event loop to stop
-				CFRunLoopSourceContext ctx = new CFRunLoopSourceContext();
-				ctx.perform = m_PerformSignalCallback;
-				m_CFRunLoopSourceRef = CFRunLoopSourceCreate(kCFAllocatorDefault, 0/* order */, ctx);
+            // RunLoopSource is used to signal the event loop to stop
+            CFRunLoopSourceContext ctx = new CFRunLoopSourceContext();
+            ctx.perform = m_PerformSignalCallback;
+            m_CFRunLoopSourceRef = CFRunLoopSourceCreate(kCFAllocatorDefault, 0/* order */, ctx);
 
-				CFRunLoopAddSource(CFRunLoopGetCurrent(), m_CFRunLoopSourceRef, m_CFRunLoopMode);
+            CFRunLoopAddSource(CFRunLoopGetCurrent(), m_CFRunLoopSourceRef, m_CFRunLoopMode);
 
-				m_CFRunLoopRef = CFRunLoopGetCurrent();
+            m_CFRunLoopRef = CFRunLoopGetCurrent();
 
-				// Notify the main thread that the read thread is up and running
-				m_SyncStart.waitAndSync();
+            // Notify the main thread that the read thread is up and running
+            m_SyncStart.waitAndSync();
 
-				// Run the event loop, CFRunLoopRunInMode(), whick will dispatch HID input reports
-				int code;
-				while (!m_StopThread && !m_Disconnected) {
-					code = CFRunLoopRunInMode(m_CFRunLoopMode, 1/* sec */, false);
-					// Return if the device has been disconnected
-					if (code == kCFRunLoopRunFinished) {
-						m_Disconnected = true;
-						break;
-					}
+            // Run the event loop, CFRunLoopRunInMode(), which will dispatch HID input reports
+            int code;
+            while (!m_StopThread && !m_Disconnected) {
+                code = CFRunLoopRunInMode(m_CFRunLoopMode, 1/* sec */, false);
+                // Return if the device has been disconnected
+                if (code == kCFRunLoopRunFinished) {
+                    m_Disconnected = true;
+                    break;
+                }
 
-					if ((code != kCFRunLoopRunTimedOut) && (code != kCFRunLoopRunHandledSource)) {
-						m_StopThread = true;
-						break;
-					}
-				}
+                if ((code != kCFRunLoopRunTimedOut) && (code != kCFRunLoopRunHandledSource)) {
+                    m_StopThread = true;
+                    break;
+                }
+            }
 
-				// Wait here until close() makes it past the call to CFRunLoopWakeUp().
+            // Wait here until close() makes it past the call to CFRunLoopWakeUp().
 
-				if (!m_Disconnected)
-					m_SyncShutdown.waitAndSync();
+            if (!m_Disconnected)
+                m_SyncShutdown.waitAndSync();
 
-			}
-		}, m_HidDeviceInfo.getPath());
+        }, m_HidDeviceInfo.getPath());
 		m_Backend.addDevice(m_HidDeviceInfo.getDeviceId(), this);
 		m_Open = true;
 		m_Thread.start();
@@ -197,25 +193,21 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	}
 
 	static String getStringProperty(IOHIDDeviceRef device, CFStringRef prop) {
-		try {
-			CFTypeRef t = IOHIDDeviceGetProperty(device, prop);
-			CFStringRef str = null;
-			if (t != null)
-				str = new CFStringRef(t.getPointer());
-			if (str != null) {
-				long str_len = CFStringGetLength(str);
-				CFRange range = new CFRange(0, str_len);
-				long[] used_buf_len = { 0 };
-				// long chars_copied = CFStringGetBytes(str, range, kCFStringEncodingUTF32LE, (byte) '?', false, buf, 255, used_buf_len);
-				CFStringGetBytes(str, range, kCFStringEncodingUTF8, (byte) '?', false, null, 0, used_buf_len);
-				byte[] buf = new byte[(int) used_buf_len[0]];
-				CFStringGetBytes(str, range, kCFStringEncodingUTF8, (byte) '?', false, buf, buf.length, used_buf_len);
-				return new String(buf, "utf-8");
-			}
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-		return null;
+        CFTypeRef t = IOHIDDeviceGetProperty(device, prop);
+        CFStringRef str = null;
+        if (t != null)
+            str = new CFStringRef(t.getPointer());
+        if (str != null) {
+            long str_len = CFStringGetLength(str);
+            CFRange range = new CFRange(0, str_len);
+            long[] used_buf_len = { 0 };
+            // long chars_copied = CFStringGetBytes(str, range, kCFStringEncodingUTF32LE, (byte) '?', false, buf, 255, used_buf_len);
+            CFStringGetBytes(str, range, kCFStringEncodingUTF8, (byte) '?', false, null, 0, used_buf_len);
+            byte[] buf = new byte[(int) used_buf_len[0]];
+            CFStringGetBytes(str, range, kCFStringEncodingUTF8, (byte) '?', false, buf, buf.length, used_buf_len);
+            return new String(buf, StandardCharsets.UTF_8);
+        }
+        return null;
 	}
 
 	static String createPathForDevide(IOHIDDeviceRef dev) {
@@ -244,6 +236,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	}
 
 	static class HidReportCallback implements IOHIDReportCallback {
+		@Override
 		public void callback(Pointer context, int result, Pointer sender, int reportType, int reportId, Pointer report, NativeLong report_length) {
 			// System.out.println("HidReportCallback "+Thread.currentThread().getName());
 			HidDevice dev = m_DevFromCallback.get(this);
@@ -271,6 +264,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		}
 	}
 
+	@Override
 	synchronized public int getFeatureReport(byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
@@ -284,6 +278,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			return -1;
 	}
 
+	@Override
 	synchronized public int getFeatureReport(int reportId, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
@@ -323,6 +318,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			return -1;
 	}
 
+	@Override
 	synchronized public int setOutputReport(byte reportId, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
@@ -333,6 +329,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		return setReport(kIOHIDReportTypeOutput, reportId, temp, length+i);
 	}
 
+	@Override
 	synchronized public int setFeatureReport(byte reportId, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
@@ -343,12 +340,14 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		return setReport(kIOHIDReportTypeFeature, reportId, temp, length + i);
 	}
 
+	@Override
 	synchronized public int setFeatureReport(byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		return setReport(kIOHIDReportTypeFeature, (byte) 0, data, length);
 	}
 
+	@Override
 	synchronized public void close() {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");

@@ -40,7 +40,7 @@ public interface DeviceRemovalListener {
 
 	/**
 	 * This method is called when the USB device associated with the
-	 * the HidDevice that the listener to is attached goes off line i.e.
+	 * HidDevice that the listener to is attached goes off line i.e.
 	 * is unplugged.
 	 * <p>
 	 * This only happens if the device is open, so this not a mechanism

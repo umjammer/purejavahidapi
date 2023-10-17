@@ -31,7 +31,6 @@ package purejavahidapi.macosx;
 
 import static purejavahidapi.macosx.CoreFoundationLibrary.CFSTR;
 import static purejavahidapi.macosx.IOHIDManagerLibrary.*;
-import purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceRef;
 import static purejavahidapi.macosx.HidDevice.*;
 
 /* package */class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {

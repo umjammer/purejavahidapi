@@ -112,7 +112,7 @@ abstract public class HidDevice {
 	 *            a byte array containing the data to be sent
 	 * @param length
 	 *            the number of bytes to send from the data array
-	 * @return number bytes actually sent or -1 if the send failed
+	 * @return number bytes actually sent or -1 if to send failed
 	 */
 
 	abstract public int setOutputReport(byte reportID, byte[] data, int length);
@@ -216,7 +216,7 @@ abstract public class HidDevice {
 	 * <p>
 	 * 
      * @param reportId
-     *            an specifying the report ID to received
+     *            a specifying the report ID to received
 	 * @param data
 	 *            a byte array into which data is received
 	 * @param length

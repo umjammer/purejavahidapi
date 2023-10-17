@@ -56,66 +56,65 @@ public class DeviceRemovalHandler implements WindowProc {
 	public DeviceRemovalHandler(WindowsBackend windowsBackend) {
 		m_WindowsBackend = windowsBackend;
 		m_StartupSync = new SyncPoint(2);
-		Runnable threadRunnable = new Runnable() {
-			public void run() {
-				String wndClassName = new String("WindowClass");
-				HMODULE hInst = INSTANCE.GetModuleHandle(null);
-				if (hInst == null)
-					reportLastError();
+		Runnable threadRunnable = () -> {
+            String wndClassName = "WindowClass";
+            HMODULE hInst = INSTANCE.GetModuleHandle(null);
+            if (hInst == null)
+                reportLastError();
 
-				WNDCLASSEX wndClassEx = new WNDCLASSEX();
-				wndClassEx.hInstance = hInst;
-				wndClassEx.lpfnWndProc = DeviceRemovalHandler.this;
-				wndClassEx.lpszClassName = wndClassName;
+            WNDCLASSEX wndClassEx = new WNDCLASSEX();
+            wndClassEx.hInstance = hInst;
+            wndClassEx.lpfnWndProc = DeviceRemovalHandler.this;
+            wndClassEx.lpszClassName = wndClassName;
 
-				ATOM wndClassRef = User32.INSTANCE.RegisterClassEx(wndClassEx);
-				if (wndClassRef == null)
-					reportLastError();
+            ATOM wndClassRef = User32.INSTANCE.RegisterClassEx(wndClassEx);
+            if (wndClassRef == null)
+                reportLastError();
 
-				HWND hWnd = User32.INSTANCE.CreateWindowEx(WS_EX_TOPMOST, "WindowClass", "", 0, 0, 0, 0, 0, null, null, hInst, null);
+            HWND hWnd = User32.INSTANCE.CreateWindowEx(WS_EX_TOPMOST, "WindowClass", "", 0, 0, 0, 0, 0, null, null, hInst, null);
 
-				if (hWnd == null)
-					reportLastError();
+            if (hWnd == null)
+                reportLastError();
 
-				if (!Wtsapi32.INSTANCE.WTSRegisterSessionNotification(hWnd, NOTIFY_FOR_THIS_SESSION))
-					reportLastError();
+            if (!Wtsapi32.INSTANCE.WTSRegisterSessionNotification(hWnd, NOTIFY_FOR_THIS_SESSION))
+                reportLastError();
 
-				DEV_BROADCAST_DEVICEINTERFACE notificationFilter = new DEV_BROADCAST_DEVICEINTERFACE();
-				notificationFilter.dbcc_size = notificationFilter.size();
-				notificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
-				notificationFilter.dbcc_classguid = GUID_DEVINTERFACE_USB_DEVICE;
+            DEV_BROADCAST_DEVICEINTERFACE notificationFilter = new DEV_BROADCAST_DEVICEINTERFACE();
+            notificationFilter.dbcc_size = notificationFilter.size();
+            notificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+            notificationFilter.dbcc_classguid = GUID_DEVINTERFACE_USB_DEVICE;
 
-				HDEVNOTIFY hDevNotify = User32.INSTANCE.RegisterDeviceNotification(hWnd, notificationFilter, DEVICE_NOTIFY_WINDOW_HANDLE);
-				if (hDevNotify == null)
-					reportLastError();
+            HDEVNOTIFY hDevNotify = User32.INSTANCE.RegisterDeviceNotification(hWnd, notificationFilter, DEVICE_NOTIFY_WINDOW_HANDLE);
+            if (hDevNotify == null)
+                reportLastError();
 
-				m_StartupSync.waitAndSync();
-				
-				MSG msg = new MSG();
-				while (User32.INSTANCE.GetMessage(msg, hWnd, 0, 0) != 0) {
-					User32.INSTANCE.TranslateMessage(msg);
-					User32.INSTANCE.DispatchMessage(msg);
-				}
+            m_StartupSync.waitAndSync();
 
-				if (!User32.INSTANCE.UnregisterDeviceNotification(hDevNotify))
-					reportLastError();
+            MSG msg = new MSG();
+            while (User32.INSTANCE.GetMessage(msg, hWnd, 0, 0) != 0) {
+                User32.INSTANCE.TranslateMessage(msg);
+                User32.INSTANCE.DispatchMessage(msg);
+            }
 
-				if (!Wtsapi32.INSTANCE.WTSUnRegisterSessionNotification(hWnd))
-					reportLastError();
+            if (!User32.INSTANCE.UnregisterDeviceNotification(hDevNotify))
+                reportLastError();
 
-				if (!User32.INSTANCE.UnregisterClass(wndClassRef.toString() /* "WindowClass" */, hInst))
-					reportLastError();
+            if (!Wtsapi32.INSTANCE.WTSUnRegisterSessionNotification(hWnd))
+                reportLastError();
 
-				if (!User32.INSTANCE.DestroyWindow(hWnd))
-					reportLastError();
-			}
-		};
+            if (!User32.INSTANCE.UnregisterClass(wndClassRef.toString() /* "WindowClass" */, hInst))
+                reportLastError();
+
+            if (!User32.INSTANCE.DestroyWindow(hWnd))
+                reportLastError();
+        };
 		Thread thread = new Thread(threadRunnable, this.getClass().getSimpleName());
 		thread.setDaemon(true);
 		thread.start();
 		m_StartupSync.waitAndSync();
 	}
 
+	@Override
 	public LRESULT callback(HWND hwnd, int uMsg, WPARAM wParam, LPARAM lParam) {
 		switch (uMsg) {
 			case WM_DESTROY: {
@@ -132,12 +131,9 @@ public class DeviceRemovalHandler implements WindowProc {
 	}
 
 	protected LRESULT onDeviceChange(WPARAM wParam, LPARAM lParam) {
-		switch (wParam.intValue()) {
-			case DBT_DEVICEREMOVECOMPLETE:
-				return onDeviceChangeRemoveComplete(lParam);
-			default:
-				break;
-		}
+        if (wParam.intValue() == DBT_DEVICEREMOVECOMPLETE) {
+            return onDeviceChangeRemoveComplete(lParam);
+        }
 		return null;
 	}
 
@@ -167,15 +163,12 @@ public class DeviceRemovalHandler implements WindowProc {
 
 	protected LRESULT onDeviceChangeArrivalOrRemoveComplete(LPARAM lParam, String action) {
 		DEV_BROADCAST_HDR bhdr = new DEV_BROADCAST_HDR(lParam.longValue());
-		switch (bhdr.dbch_devicetype) {
-			case DBT_DEVTYP_DEVICEINTERFACE: {
-				DEV_BROADCAST_DEVICEINTERFACE bdif = new DEV_BROADCAST_DEVICEINTERFACE(bhdr.getPointer());
-				handleDeviceRemoval(bdif.getDbcc_name());
-				break;
-			}
-			default:
-				return null;
-		}
+        if (bhdr.dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE) {
+            DEV_BROADCAST_DEVICEINTERFACE bdif = new DEV_BROADCAST_DEVICEINTERFACE(bhdr.getPointer());
+            handleDeviceRemoval(bdif.getDbcc_name());
+        } else {
+            return null;
+        }
 		return new LRESULT(1);
 	}
 
