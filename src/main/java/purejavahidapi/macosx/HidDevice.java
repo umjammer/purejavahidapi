@@ -33,6 +33,7 @@ package purejavahidapi.macosx;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Hashtable;
+import java.util.logging.Logger;
 
 import com.sun.jna.Callback;
 import com.sun.jna.Memory;
@@ -68,6 +69,8 @@ import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOReturnSuccess;
 
 public class HidDevice extends purejavahidapi.HidDevice {
 
+    private static final Logger log = Logger.getLogger(HidDevice.class.getName());
+
     private MacOsXBackend m_Backend;
     private static int m_InternalIdGenerator = 0;
     int m_InternalId = m_InternalIdGenerator++; // used when passing 'HidDevice' to Mac OS X callbacks
@@ -95,11 +98,15 @@ public class HidDevice extends purejavahidapi.HidDevice {
         return new Pointer(m_InternalId);
     }
 
+    /** @throws IllegalStateException when handle not found for {@code hidDeviceInfo.path} */
     HidDevice(HidDeviceInfo hidDeviceInfo, MacOsXBackend backend) {
         m_Backend = backend;
         m_HidDeviceInfo = hidDeviceInfo;
 
         m_IOHIDDeviceRef = m_Backend.getIOHIDDeviceRef(hidDeviceInfo.getPath());
+        if (m_IOHIDDeviceRef == null) {
+            throw new IllegalStateException("no IOHIDDeviceRef for path: " + hidDeviceInfo.getPath());
+        }
 
         m_PerformSignalCallback = new PerformSignalCallback();
         m_DevFromCallback.put(m_PerformSignalCallback, this);

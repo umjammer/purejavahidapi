@@ -86,7 +86,7 @@ public class PureJavaHidApi {
      *
      * @param path A path obtained from a HidDeviceInfo object.
      * @return An instance of HidDevice that can be used to communicate with the
-     * HID device.
+     * HID device. nullable
      * @throws IOException if the device cannot be opened
      * @see HidDeviceInfo#getPath()
      */

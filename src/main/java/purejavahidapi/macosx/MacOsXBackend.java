@@ -32,6 +32,7 @@ package purejavahidapi.macosx;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import com.sun.jna.Pointer;
 import purejavahidapi.shared.Backend;
@@ -60,7 +61,9 @@ import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOReturnSuccess;
 
 public class MacOsXBackend extends Backend {
 
-    /* package */static IOHIDManagerRef m_HidManager;
+    private static final Logger log = Logger.getLogger(MacOsXBackend.class.getName());
+
+    /* package */ static IOHIDManagerRef m_HidManager;
 
     @Override
     public List<purejavahidapi.HidDeviceInfo> enumerateDevices() {
@@ -87,10 +90,16 @@ public class MacOsXBackend extends Backend {
 
     @Override
     public purejavahidapi.HidDevice openDevice(purejavahidapi.HidDeviceInfo deviceInfo) {
-        return new HidDevice((HidDeviceInfo) deviceInfo, this);
+        try {
+            return new HidDevice((HidDeviceInfo) deviceInfo, this);
+        } catch (IllegalStateException e) {
+log.warning("no device for " + deviceInfo.getPath());
+            return null;
+        }
     }
 
-    /* package */IOHIDDeviceRef getIOHIDDeviceRef(String path) {
+    /** @return nullable */
+    /* package */ IOHIDDeviceRef getIOHIDDeviceRef(String path) {
         HidDevice.processPendingEvents(); // FIXME why do we call this here???
 
         CFSetRef device_set = IOHIDManagerCopyDevices(m_HidManager);
@@ -109,11 +118,17 @@ public class MacOsXBackend extends Backend {
                     CFRelease(device_set);
                     return os_dev;
                 } else {
-                    System.out.printf("IOHIDDeviceOpen: %d,%d,%d\n", (ret >> (32 - 6)) & 0x3f, (ret >> (32 - 6 - 12)) & 0xFFF, ret & 0x3FFF);
+                    log.fine(String.format("IOHIDDeviceOpen: %d,%d,%d", (ret >> (32 - 6)) & 0x3f, (ret >> (32 - 6 - 12)) & 0xFFF, ret & 0x3FFF));
                 }
             }
         }
+for (int i = 0; i < num_devices; i++) {
+ IOHIDDeviceRef os_dev = new IOHIDDeviceRef(device_array[i]);
+ String x = createPathForDevice(os_dev);
+ log.finest(String.format("device[%d]: %s", i, x));
+}
         CFRelease(device_set);
+log.warning("no IOHIDDeviceRef for path: " + path);
         return null;
     }
 
