@@ -1,7 +1,28 @@
-<sup><sub>*"I'm inspired,intrigued, amazed and annoyed by how difficult, complex, rare and long time coming simple cross
-platform USB IO is!"*</sub></sup>
+[![Release](https://jitpack.io/v/umjammer/purejavahidapi.svg)](https://jitpack.io/#umjammer/purejavahidapi)
+[![Java CI](https://github.com/umjammer/purejavahidapi/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/purejavahidapi/actions/workflows/maven.yml)
+[![CodeQL](https://github.com/umjammer/purejavahidapi/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/umjammer/purejavahidapi/actions/workflows/codeql-analysis.yml)
+![Java](https://img.shields.io/badge/Java-17-b07219)
 
 # Pure Java HID-API
+
+## Install
+
+ * [maven](https://jitpack.io/#umjammer/purejavahidapi)
+
+## References
+
+ * https://github.com/signal11/hidapi
+
+## TODO
+
+ * jinput spi
+
+---
+
+# Original
+
+<sup><sub>*"I'm inspired,intrigued, amazed and annoyed by how difficult, complex, rare and long time coming simple cross
+platform USB IO is!"*</sub></sup>
 
 ### Summary
 
