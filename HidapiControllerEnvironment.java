@@ -38,14 +38,17 @@ public final class HidapiControllerEnvironment extends ControllerEnvironment {
 
     /** */
     public HidapiControllerEnvironment() {
-        controllers = PureJavaHidApi.enumerateDevices().stream().map(this::toHidapiController).collect(Collectors.toList());
+        controllers = PureJavaHidApi.enumerateDevices().stream().map(this::toHidapiController).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    /** */
+    /** @return nullable */
     @SuppressWarnings("WhileLoopReplaceableByForEach")
     private HidapiController toHidapiController(HidDeviceInfo deviceInfo) {
         try {
             HidDevice device = PureJavaHidApi.openDevice(deviceInfo);
+            if (device == null) {
+                return null;
+            }
 
             device.setDeviceRemovalListener(d -> {
 Debug.println("device removed");
@@ -67,9 +70,9 @@ Debug.printf("getFeatureReport: len: %d", len);
             if (len > 0) {
 Debug.printf("getFeatureReport:%n%s", StringUtil.getDump(data));
                 HidParser hidParser = new HidParser();
-                byte[] data2 = new byte[131];
+                byte[] data2 = new byte[len];
                 System.arraycopy(data, 1, data2, 0, len - 1);
-                hidParser.parse(data2, len - 1);
+//                hidParser.parse(data2, len);
             }
 
             return new HidapiController(device, new Component[0], new Controller[0], new Rumbler[0]);
