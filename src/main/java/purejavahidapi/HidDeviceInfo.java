@@ -160,11 +160,11 @@ public class HidDeviceInfo {
      *
      * @return the Device Id String or null
      */
-
     public String getDeviceId() {
         return m_DeviceId;
     }
 
+    @Override
     public String toString() {
 
         return String.format("[" //

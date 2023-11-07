@@ -354,6 +354,12 @@ public class CoreFoundationLibrary {
 
         NativeLong CFGetTypeID(Pointer cf);
 
+        NativeLong CFDataGetTypeID();
+
+        Pointer CFDataGetBytePtr(Pointer p);
+
+        NativeLong CFDataGetLength(Pointer p);
+
         boolean CFNumberGetValue(CFNumber number, int theType, int[] value);
 
         CFStringRef CFStringCreateWithCString(CFAllocatorRef alloc, String cStr, int encoding);
@@ -389,7 +395,6 @@ public class CoreFoundationLibrary {
         CFUUIDRef CFUUIDCreateFromString(CFAllocatorRef alloc, CFStringRef uuidStr);
 
         CFUUID.ByValue CFUUIDGetUUIDBytes(CFUUIDRef uuid);
-
     }
 
     // ----
@@ -416,6 +421,18 @@ public class CoreFoundationLibrary {
 
     public static long CFGetTypeID(Pointer cf) {
         return INSTANCE.CFGetTypeID(cf).longValue();
+    }
+
+    public static long CFDataGetTypeID() {
+        return INSTANCE.CFDataGetTypeID().longValue();
+    }
+
+    public static Pointer CFDataGetBytePtr(Pointer cf) {
+        return INSTANCE.CFDataGetBytePtr(cf);
+    }
+
+    public static long CFDataGetLength(Pointer cf) {
+        return INSTANCE.CFDataGetLength(cf).longValue();
     }
 
     public static boolean CFNumberGetValue(CFNumber number, int theType, int[] value) {
@@ -492,5 +509,4 @@ public class CoreFoundationLibrary {
     public static CFUUID.ByValue CFUUIDGetUUIDBytes(CFUUIDRef uuid) {
         return INSTANCE.CFUUIDGetUUIDBytes(uuid);
     }
-
 }

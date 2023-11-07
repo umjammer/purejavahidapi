@@ -96,6 +96,8 @@ public class Kernel32Library {
 
     public static final int IOCTL_HID_SET_FEATURE = 0xb0191;
 
+    public static final int IOCTL_HID_GET_REPORT_DESCRIPTOR = 0xb0004;
+
     public interface Kernel32Interface extends StdCallLibrary {
 
         HANDLE CreateFile(String name, int access, int sharing, SECURITY_ATTRIBUTES security, int create, int attribs, Pointer template);

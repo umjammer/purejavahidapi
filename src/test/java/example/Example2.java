@@ -104,9 +104,8 @@ public class Example2 {
 //								}
 
                                 byte[] data = new byte[132];
-                                data[0] = 1;
                                 int len;
-                                if (((len = dev.getFeatureReport(data, data.length)) >= 0) && true) {
+                                if (((len = dev.getFeatureReport(1, data, data.length)) >= 0) && true) {
                                     int Id = data[0];
                                     System.out.printf("getFeatureReport: id %d len %d data ", Id, len);
                                     for (byte datum : data) System.out.printf("%02X ", datum);

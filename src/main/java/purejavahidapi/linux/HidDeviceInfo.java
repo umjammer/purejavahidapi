@@ -48,7 +48,7 @@ import static purejavahidapi.linux.UdevLibrary.udev_new;
 import static purejavahidapi.linux.UdevLibrary.udev_unref;
 
 
-/* package */class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
+class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
 
     public HidDeviceInfo(String sysfs_path) throws IOException {
         m_DevicePath = sysfs_path;

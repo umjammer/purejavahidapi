@@ -77,7 +77,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
     private SyncPoint m_SyncShutdown;
     private boolean m_StopThread;
     private byte[] m_InputReportBytes;
-    private byte[] m_GetFeatureReportBytes;
 
     /* package */ HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, LinuxBackend backend) throws IOException {
         m_Backend = backend;
@@ -231,13 +230,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
     }
 
     @Override
-    synchronized public int setFeatureReport(byte[] data, int length) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
-        return ioctl(m_DeviceHandle, HIDIOCSFEATURE(length), data);
-    }
-
-    @Override
     synchronized public void setInputReportListener(InputReportListener listener) {
         if (!m_Open)
             throw new IllegalStateException("device not open");
@@ -252,14 +244,13 @@ public class HidDevice extends purejavahidapi.HidDevice {
     }
 
     @Override
-    synchronized public int getFeatureReport(byte[] data, int length) {
+    synchronized public int getInputReportDescriptor(byte[] data, int length) {
         if (!m_Open)
             throw new IllegalStateException("device not open");
-        int res = ioctl(m_DeviceHandle, HIDIOCGFEATURE(length), m_GetFeatureReportBytes);
+        int res = ioctl(m_DeviceHandle, HIDIOCGRDESC, data);
         if (res < 0)
             return -1;
-        System.arraycopy(m_GetFeatureReportBytes, 1, data, 0, res - 1);
-        return res - 1;
+        return res;
     }
 
     @Override

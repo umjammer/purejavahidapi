@@ -30,11 +30,48 @@
 
 package hidparser;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
+import purejavahidapi.HidDevice;
+import purejavahidapi.HidDeviceInfo;
+import purejavahidapi.PureJavaHidApi;
 import purejavahidapi.hidparser.HidParser;
+import vavi.util.Debug;
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
 
 
+@EnabledIf("localPropertiesExists")
+@PropsEntity(url = "file:local.properties")
 public class HidParserTestData {
+
+    static boolean localPropertiesExists() {
+        return Files.exists(Paths.get("local.properties"));
+    }
+
+    @Property(name = "mid")
+    String mid;
+    @Property(name = "pid")
+    String pid;
+
+    int vendorId;
+    int productId;
+
+    @BeforeEach
+    void setup() throws Exception {
+        if (localPropertiesExists()) {
+            PropsEntity.Util.bind(this);
+
+            vendorId = Integer.decode(mid);
+            productId = Integer.decode(pid);
+        }
+    }
 
     static int[] WHB04 = { //
             0x06, 0x00, 0xFF, 0x09, 0x01, 0xA1, 0x01, 0x85, 0x04, 0x09, 0x01, 0x15, 0x00, 0x26, 0xFF, 0x00, //
@@ -165,5 +202,27 @@ public class HidParserTestData {
             descriptor[i] = (byte) testData[i];
         HidParser parser = new HidParser();
         parser.parse(descriptor, descriptor.length);
+    }
+
+    @Test
+    void test5() throws Exception {
+        HidDeviceInfo devInfo = null;
+        List<HidDeviceInfo> devList = PureJavaHidApi.enumerateDevices();
+        for (HidDeviceInfo info : devList) {
+            if (info.getVendorId() == (short) vendorId && info.getProductId() == (short) productId) {
+                devInfo = info;
+                break;
+            }
+        }
+        HidDevice device = PureJavaHidApi.openDevice(devInfo);
+Debug.println("device: " + device);
+
+        byte[] d = new byte[4096];
+        int r = device.getInputReportDescriptor(d, d.length);
+Debug.println("r: " + r);
+
+        HidParser parser = new HidParser();
+        parser.parse(d, r);
+//        parser.dump("");
     }
 }

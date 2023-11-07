@@ -30,6 +30,7 @@
 
 package purejavahidapi;
 
+
 /**
  * An InputReportListener gets called from background thread attached to a {@link HidDevice}
  * every time an input report is received from the tha associated USB device.

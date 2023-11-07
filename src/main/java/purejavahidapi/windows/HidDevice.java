@@ -55,6 +55,7 @@ import static purejavahidapi.windows.Kernel32Library.ERROR_IO_PENDING;
 import static purejavahidapi.windows.Kernel32Library.GetLastError;
 import static purejavahidapi.windows.Kernel32Library.GetOverlappedResult;
 import static purejavahidapi.windows.Kernel32Library.IOCTL_HID_GET_FEATURE;
+import static purejavahidapi.windows.Kernel32Library.IOCTL_HID_GET_REPORT_DESCRIPTOR;
 import static purejavahidapi.windows.Kernel32Library.IOCTL_HID_SET_FEATURE;
 import static purejavahidapi.windows.Kernel32Library.ReadFile;
 import static purejavahidapi.windows.Kernel32Library.WriteFile;
@@ -78,11 +79,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
     private SyncPoint m_SyncStart;
     private SyncPoint m_SyncShutdown;
     private boolean m_StopThread;
-
-    /*
-     *
-
-     */
 
     /* package */ HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, WindowsBackend backend) {
         String[] paths = deviceInfo.getPath().split(HidDeviceInfo.SEPARATOR);
@@ -155,7 +151,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
             m_Thread.start();
             m_SyncStart.waitAndSync();
         }
-
     }
 
     @Override
@@ -207,52 +202,28 @@ public class HidDevice extends purejavahidapi.HidDevice {
     }
 
     @Override
-    @Deprecated
-    synchronized public int setFeatureReport(byte[] data, int length) {
+    public synchronized int getInputReportDescriptor(byte[] data, int length) {
         if (!m_Open)
             throw new IllegalStateException("device not open");
-        if (!HidD_SetFeature(m_Handles[FEATURE], data, length)) {
-            // register_error(dev, "HidD_SetFeature");
-            return -1;
-        }
-
-        return length;
-    }
-
-    @Override
-    @Deprecated
-    synchronized public int getFeatureReport(byte[] data, int length) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
-        if (false) { // can't use this as it will not return the size of the report
-            if (!HidD_GetFeature(m_Handles[FEATURE], data, length)) {
-                // register_error(dev, "HidD_SetFeature");
-                System.out.println(GetLastError());
-                return -1;
-            }
-        } else {
-            if (!DeviceIoControl(m_Handles[FEATURE], IOCTL_HID_GET_FEATURE, m_Buffer[FEATURE], m_ReportLength[FEATURE], m_Buffer[FEATURE], m_ReportLength[FEATURE], m_Transfrd[FEATURE], m_Overlapped[FEATURE])) {
+        int[] transferred = new int[1];
+        try (Memory memory = new Memory(length)) {
+            OVERLAPPED overlapped = new OVERLAPPED();
+            // TODO check
+            if (!DeviceIoControl(m_Handles[INPUT], IOCTL_HID_GET_REPORT_DESCRIPTOR, memory, length, memory, length, transferred, overlapped)) {
                 // System.out.println(GetLastError());
                 if (GetLastError() != ERROR_IO_PENDING)
                     return -1;
             }
 
-            if (!GetOverlappedResult(m_Handles[FEATURE], m_Overlapped[FEATURE], m_Transfrd[FEATURE], true/* wait */))
+            if (!GetOverlappedResult(m_Handles[INPUT], overlapped, transferred, true/* wait */))
                 return -1;
-            m_Buffer[FEATURE].read(1, data, 0, m_Transfrd[FEATURE][0]);
-            return m_Transfrd[FEATURE][0];
+            memory.read(0, data, 0, transferred[0]);
         }
-        return -1; // Eclipse says this is unreachable (it is), but won't compile without it ... go
-        // figure
-
+        return transferred[0];
     }
 
     @Override
-    synchronized public int getFeatureReport(int reportId, byte[] data, int length) {
-        return getFeatureReport((byte) reportId, data, length);
-    }
-
-    synchronized public int getFeatureReport(byte reportId, byte[] data, int length) {
+    public synchronized int getFeatureReport(int reportId, byte[] data, int length) {
         if (!m_Open)
             throw new IllegalStateException("device not open");
         if (false) { // can't use this as it will not return the size of the report
@@ -261,7 +232,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
                 return -1;
             }
         } else {
-            m_Buffer[FEATURE].write(0, new byte[] {reportId}, 0, 1);
+            m_Buffer[FEATURE].write(0, new byte[] {(byte) reportId}, 0, 1);
             if (!DeviceIoControl(m_Handles[FEATURE], IOCTL_HID_GET_FEATURE, m_Buffer[FEATURE], m_ReportLength[FEATURE], m_Buffer[FEATURE], m_ReportLength[FEATURE], m_Transfrd[FEATURE], m_Overlapped[FEATURE])) {
                 // System.out.println(GetLastError());
                 if (GetLastError() != ERROR_IO_PENDING)
