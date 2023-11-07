@@ -32,6 +32,8 @@ package purejavahidapi.hidparser;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -51,7 +53,8 @@ import java.util.LinkedList;
  */
 public class HidParser {
 
-    public static final boolean TRACE = true;
+    private static final Logger logger = Logger.getLogger(HidParser.class.getName());
+    
     private Collection m_RootCollection;
     private Collection m_TopCollection;
     private LinkedList<Global> m_GlobalStack;
@@ -188,7 +191,6 @@ public class HidParser {
             }
 
         }
-
     }
 
     public static final class Item {
@@ -352,7 +354,7 @@ public class HidParser {
 
             case PHYSICAL_MAXIMUM:
                 m_Global.m_PhysicalMaximum = item.m_SValue;
-                System.out.println("m_Global.m_PhysicalMaximum " + m_Global.m_PhysicalMaximum);
+                logger.fine("m_Global.m_PhysicalMaximum " + m_Global.m_PhysicalMaximum);
                 break;
 
             case UNIT_EXPONENT:
@@ -425,9 +427,6 @@ public class HidParser {
             if (item.m_Size == 0)
                 throw new IllegalStateException("item data expected for local item");
 
-            int usage = item.m_UValue;
-            if (item.m_Size <= 2) // FIXME is this in the spec?
-                usage = (m_Global.m_UsagePage << 16) + usage;
             switch (item.m_LTag) {
             case DELIMITER:
                 if (item.m_UValue > 0) {
@@ -444,6 +443,10 @@ public class HidParser {
 
             case USAGE:
 
+                int usage = item.m_UValue;
+                if (item.m_Size <= 2) // FIXME is this in the spec?
+                    usage = (m_Global.m_UsagePage << 16) + usage;
+
                 if (m_Local.m_DelimiterBranch > 1)
                     // alternative usage ignored
                     break;
@@ -452,19 +455,19 @@ public class HidParser {
 
             case USAGE_MINIMUM:
 
-                if (m_Local.m_DelimiterDepth > 1)
+//                if (m_Local.m_DelimiterDepth > 1)
                     // alternative usage ignored
 
-                    m_Local.m_UsageMinimum = usage;
+                    m_Local.m_UsageMinimum = item.m_UValue;
                 break;
 
             case USAGE_MAXIMUM:
 
-                if (m_Local.m_DelimiterBranch > 1)
+//                if (m_Local.m_DelimiterBranch > 1)
                     // alternative usage ignored
 
                     for (int n = m_Local.m_UsageMinimum; n <= item.m_UValue; n++)
-                        addUsage(n);
+                        addUsage((m_Global.m_UsagePage << 16) + n);
                 break;
             // ignore the rest
             case DESIGNATOR_INDEX:
@@ -534,7 +537,7 @@ public class HidParser {
             item = new Item(size, ItemType.values()[type], tag, value);
         }
 
-        if (TRACE) {
+        if (logger.isLoggable(Level.FINER)) {
             String tags = "?";
             if (item.m_GTag != null)
                 tags = item.m_GTag.toString();

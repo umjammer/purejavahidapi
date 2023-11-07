@@ -31,9 +31,12 @@
 package purejavahidapi.hidparser;
 
 import java.util.LinkedList;
+import java.util.logging.Logger;
 
 
 public final class Collection {
+
+    private static final Logger logger = Logger.getLogger(Collection.class.getName());
 
     Collection m_Parent;
     LinkedList<Collection> m_Children;
@@ -56,6 +59,7 @@ public final class Collection {
     }
 
     void dump(String tab) {
+logger.fine("children: " + m_Children.size() + ", fields: " + m_Fields.size());
         if (m_Parent != null) {
             HidParser.printf(tab + "collection  type %d  usage 0x%04X:0x%04X\n", m_Type, (m_Usage >> 16) & 0xFFFF, m_Usage & 0xFFFF);
             tab += "   ";
