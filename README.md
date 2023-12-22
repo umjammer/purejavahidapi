@@ -120,13 +120,13 @@ import purejavahidapi.*;
 ...
 List<HidDeviceInfo> devList = PureJavaHidApi.enumerateDevices();
 for (HidDeviceInfo info : devList) {
-	System.out.printf("VID = 0x%04X PID = 0x%04X Manufacturer = %s Product = %s Path = %s\n", //
-		info.getVendorId(), //
-		info.getProductId(), //
-		info.getManufacturerString(), //
-		info.getProductString(), //
-		info.getPath());
-		}
+    System.out.printf("VID = 0x%04X PID = 0x%04X Manufacturer = %s Product = %s Path = %s\n", //
+        info.getVendorId(), //
+        info.getProductId(), //
+        info.getManufacturerString(), //
+        info.getProductString(), //
+        info.getPath());
+        }
 
 ```
 
@@ -138,27 +138,28 @@ import purejavahidapi.*;
 List<HidDeviceInfo> devList = PureJavaHidApi.enumerateDevices();
 HidDeviceInfo devInfo = null;
 for (HidDeviceInfo info : devList) {
-	if (info.getVendorId() == (short)0x0810 && info.getProductId() == (short)0x0005) {
-		devInfo = info;
-		break;
-		}
-	}
+  if (info.getVendorId() == 0x0810 && info.getProductId() == 0x0005) { // different from original, return value is int
+    devInfo = info;
+    break;
+  }
+}
 
 ```
 
 ... and then open and attach an input report listener to it:
 
 ```java
-HidDevice dev=PureJavaHidApi.openDevice(devInfo);
+HidDevice dev = PureJavaHidApi.openDevice(devInfo);
+dev.open(); // different from original, open is needed
 dev.setInputReportListener(new InputReportListener() {
-	@Override
-	public void onInputReport(HidDevice source, byte Id, byte[] data, int len) {
-		System.out.printf("onInputReport: id %d len %d data ", Id, len);
-		for (int i = 0; i < len; i++)
-			System.out.printf("%02X ", data[i]);
-		System.out.println();
-		}
-	});
+    @Override
+    public void onInputReport(HidDevice source, byte Id, byte[] data, int len) {
+        System.out.printf("onInputReport: id %d len %d data ", Id, len);
+        for (int i = 0; i < len; i++)
+            System.out.printf("%02X ", data[i]);
+        System.out.println();
+    }
+});
 
 ```
 

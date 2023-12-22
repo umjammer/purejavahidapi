@@ -35,7 +35,6 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import purejavahidapi.HidDevice;
@@ -216,6 +215,7 @@ public class HidParserTestData {
         }
         HidDevice device = PureJavaHidApi.openDevice(devInfo);
 Debug.println("device: " + device);
+        device.open();
 
         byte[] d = new byte[4096];
         int r = device.getInputReportDescriptor(d, d.length);

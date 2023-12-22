@@ -49,6 +49,7 @@ public class HidDeviceInfo {
     protected short m_ProductId;
     protected short m_ReleaseNumber;
     protected short m_UsagePage;
+    protected short m_UsageId;
     protected String m_SerialNumberString;
     protected String m_ManufactureString;
     protected String m_ProductString;
@@ -77,8 +78,8 @@ public class HidDeviceInfo {
      *
      * @return the 16 bit Vendor Id
      */
-    public short getVendorId() {
-        return m_VendorId;
+    public int getVendorId() {
+        return m_VendorId & 0xffff;
     }
 
     /**
@@ -90,8 +91,8 @@ public class HidDeviceInfo {
      *
      * @return the 16 bit Product Id
      */
-    public short getProductId() {
-        return m_ProductId;
+    public int getProductId() {
+        return m_ProductId & 0xffff;
     }
 
     /**
@@ -103,8 +104,8 @@ public class HidDeviceInfo {
      *
      * @return the 16 bit Release Number
      */
-    public short getReleaseNumber() {
-        return m_ReleaseNumber;
+    public int getReleaseNumber() {
+        return m_ReleaseNumber & 0xffff;
     }
 
     /**
@@ -116,8 +117,21 @@ public class HidDeviceInfo {
      *
      * @return the 16 bit Usage Page number
      */
-    public short getUsagePage() {
-        return m_UsagePage;
+    public int getUsagePage() {
+        return m_UsagePage & 0xffff;
+    }
+
+    /**
+     * This method returns the 16 bit Usage Id number of the device.
+     * <p>
+     * Note that the return type is <code>short</code> so when compared against
+     * literals or variables of type <code>int</code> sign extension interferes and
+     * thus it is necessary to cast the <code>int</code> type to <code>short</code>
+     *
+     * @return the 16 bit Usage Page number
+     */
+    public int getUsageId() {
+        return m_UsageId & 0xffff;
     }
 
     /**
@@ -173,7 +187,8 @@ public class HidDeviceInfo {
                         + "vendor id 0x%04X, " //
                         + "product id 0x%04X, " //
                         + "release num 0x%04X, " //
-                        + "usage page id 0x%04X, " //
+                        + "usage page 0x%04X, " //
+                        + "usage id 0x%04X, " //
                         + "serial '%s', " //
                         + "manufacturer '%s', " //
                         + "product id '%s'] " //
@@ -184,6 +199,7 @@ public class HidDeviceInfo {
                 m_ProductId & 0xFFFF, //
                 m_ReleaseNumber & 0xFFFF, //
                 m_UsagePage & 0xFFFF, //
+                m_UsageId & 0xFFFF, //
                 m_SerialNumberString.trim(), //
                 m_ManufactureString.trim(), //
                 m_ProductString.trim()//

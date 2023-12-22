@@ -146,6 +146,10 @@ public class HidDevice extends purejavahidapi.HidDevice {
             }
         }, m_HidDeviceInfo.getPath());
         m_Backend.addDevice(m_HidDeviceInfo.getDeviceId(), this);
+    }
+
+    @Override
+    public void open() {
         m_Open = true;
         if (m_ReportLength[INPUT] > 0) {
             m_Thread.start();
@@ -154,7 +158,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
     }
 
     @Override
-    synchronized public void close() {
+    public synchronized void close() {
         if (!m_Open)
             throw new IllegalStateException("device not open");
 
@@ -171,7 +175,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
     }
 
     @Override
-    synchronized public int setOutputReport(byte reportId, byte[] data, int length) {
+    public synchronized int setOutputReport(byte reportId, byte[] data, int length) {
         if (!m_Open)
             throw new IllegalStateException("device not open");
         if (m_ReportLength[OUTPUT] <= 0)

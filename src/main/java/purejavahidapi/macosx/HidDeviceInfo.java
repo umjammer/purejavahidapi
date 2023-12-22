@@ -37,6 +37,7 @@ import static purejavahidapi.macosx.HidDevice.getStringProperty;
 import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceRef;
 import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDManufacturerKey;
 import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDPrimaryUsageKey;
+import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDPrimaryUsagePageKey;
 import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDProductIDKey;
 import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDProductKey;
 import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDSerialNumberKey;
@@ -57,6 +58,7 @@ import static purejavahidapi.macosx.IOHIDManagerLibrary.kIOHIDVersionNumberKey;
         m_SerialNumberString = getStringProperty(dev, CFSTR(kIOHIDSerialNumberKey));
         m_ProductString = getStringProperty(dev, CFSTR(kIOHIDProductKey));
         m_ReleaseNumber = (short) getIntProperty(dev, CFSTR(kIOHIDVersionNumberKey));
-        m_UsagePage = (short) getIntProperty(dev, CFSTR(kIOHIDPrimaryUsageKey));
+        m_UsagePage = (short) getIntProperty(dev, CFSTR(kIOHIDPrimaryUsagePageKey));
+        m_UsageId = (short) getIntProperty(dev, CFSTR(kIOHIDPrimaryUsageKey));
     }
 }

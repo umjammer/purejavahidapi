@@ -30,6 +30,9 @@
 
 package purejavahidapi.windows;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.sun.jna.Memory;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
@@ -47,6 +50,8 @@ import static purejavahidapi.windows.SetupApiLibrary.HIDP_STATUS_SUCCESS;
 
 /* package */ class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
 
+    private static final Logger logger = Logger.getLogger(HidDeviceInfo.class.getName());
+
     final static String SEPARATOR = ":";
 
     /* package */ HidDeviceInfo(HANDLE handle, HIDD_ATTRIBUTES attrib) {
@@ -61,6 +66,7 @@ import static purejavahidapi.windows.SetupApiLibrary.HIDP_STATUS_SUCCESS;
             if (HidD_GetPreparsedData(handle, ppd)) {
                 if (HidP_GetCaps(ppd[0], caps) == HIDP_STATUS_SUCCESS) {
                     m_UsagePage = caps.UsagePage;
+                    m_UsageId = caps.Usage;
                 }
 
                 HidD_FreePreparsedData(ppd[0]);
@@ -77,9 +83,8 @@ import static purejavahidapi.windows.SetupApiLibrary.HIDP_STATUS_SUCCESS;
                 m_ProductString = wstr.getWideString(0);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.FINER, e.toString(), e);
         }
-
     }
 
     /* package */ void addDevicePath(String deviceId, String devicePath) {
@@ -89,8 +94,6 @@ import static purejavahidapi.windows.SetupApiLibrary.HIDP_STATUS_SUCCESS;
         } else {
             m_DeviceId = m_DeviceId + SEPARATOR + deviceId;
             m_DevicePath = m_DevicePath + SEPARATOR + devicePath;
-
         }
-
     }
 }

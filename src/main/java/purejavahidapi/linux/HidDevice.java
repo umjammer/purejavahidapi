@@ -43,7 +43,6 @@ import static purejavahidapi.linux.CLibrary.EACCES;
 import static purejavahidapi.linux.CLibrary.ENOENT;
 import static purejavahidapi.linux.CLibrary.POLLIN;
 import static purejavahidapi.linux.CLibrary.ioctl;
-import static purejavahidapi.linux.CLibrary.open;
 import static purejavahidapi.linux.CLibrary.pipe;
 import static purejavahidapi.linux.CLibrary.poll;
 import static purejavahidapi.linux.CLibrary.pollfd;
@@ -86,7 +85,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
         String dev_path = udev_device_get_devnode(raw_dev);
         udev_unref(udev);
 
-        m_DeviceHandle = open(dev_path, O_RDWR);
+        m_DeviceHandle = purejavahidapi.linux.CLibrary.open(dev_path, O_RDWR);
         if (m_DeviceHandle <= 0) {
             int err = Native.getLastError();
             if (err == EACCES)
@@ -135,6 +134,10 @@ public class HidDevice extends purejavahidapi.HidDevice {
             }
         }, m_HidDeviceInfo.getPath());
         m_Backend.addDevice(m_HidDeviceInfo.getDeviceId(), this);
+    }
+
+    @Override
+    public void open() {
         m_Open = true;
         m_Thread.setDaemon(true);
         m_Thread.start();

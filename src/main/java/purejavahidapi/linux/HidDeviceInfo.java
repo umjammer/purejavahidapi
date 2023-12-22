@@ -50,6 +50,7 @@ import static purejavahidapi.linux.UdevLibrary.udev_unref;
 
 class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
 
+    // TODO m_UsagePage, m_UsageId
     public HidDeviceInfo(String sysfs_path) throws IOException {
         m_DevicePath = sysfs_path;
         udev_device raw_dev = null;

@@ -30,6 +30,7 @@
 
 package purejavahidapi;
 
+
 /**
  * Instances of HidDevice represent a single physical USB HID device that has
  * been opened for communication.
@@ -46,13 +47,15 @@ package purejavahidapi;
  *
  * @author nyholku
  */
-
 abstract public class HidDevice {
 
     protected boolean m_Open;
     protected InputReportListener m_InputReportListener;
     protected DeviceRemovalListener m_DeviceRemovalListener;
     protected HidDeviceInfo m_HidDeviceInfo;
+
+    /** @see #m_Open */
+    public abstract void open();
 
     /**
      * This method sets the input report listener for this device.
@@ -105,6 +108,7 @@ abstract public class HidDevice {
      * than 'length' number of bytes could be returned as well as what happens
      * if the report length does not match what the device expects.
      * <p>
+     * this method is equivalent to hidapi#write
      *
      * @param reportID the report number if numbered reports are used else pass 0
      * @param data     a byte array containing the data to be sent

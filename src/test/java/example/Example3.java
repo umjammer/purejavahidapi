@@ -66,6 +66,7 @@ public class Example3 {
                         deviceOpen = true;
 
                         HidDevice dev = PureJavaHidApi.openDevice(devInfo);
+                        dev.open();
 
                         dev.setDeviceRemovalListener(source -> {
                             System.out.println("device removed");

@@ -125,7 +125,10 @@ public class HidDevice extends purejavahidapi.HidDevice {
             m_InputReportBuffer = new Memory(m_MaxInputReportLength);
             m_InputReportData = new byte[m_MaxInputReportLength];
         }
+    }
 
+    @Override
+    public void open() {
         String str = String.format("HIDAPI_0x%08x", Pointer.nativeValue(m_IOHIDDeviceRef.getPointer()));
         m_CFRunLoopMode = CFStringCreateWithCString(null, str, kCFStringEncodingASCII);
 
@@ -180,14 +183,14 @@ public class HidDevice extends purejavahidapi.HidDevice {
     }
 
     @Override
-    synchronized public void setInputReportListener(InputReportListener listener) {
+    public synchronized void setInputReportListener(InputReportListener listener) {
         if (!m_Open)
             throw new IllegalStateException("device not open");
         m_InputReportListener = listener;
     }
 
     @Override
-    synchronized public void setDeviceRemovalListener(DeviceRemovalListener listener) {
+    public synchronized void setDeviceRemovalListener(DeviceRemovalListener listener) {
         if (!m_Open)
             throw new IllegalStateException("device not open");
         m_DeviceRemovalListener = listener;
@@ -293,7 +296,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
         }
     }
 
-    static private class PerformSignalCallback implements CFRunLoopPerformCallBack {
+    private static class PerformSignalCallback implements CFRunLoopPerformCallBack {
 
         @Override
         public void callback(Pointer context) {
@@ -302,7 +305,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
     }
 
     @Override
-    synchronized public int getInputReportDescriptor(byte[] data, int length) {
+    public synchronized int getInputReportDescriptor(byte[] data, int length) {
         if (!m_Open)
             throw new IllegalStateException("device not open");
         CFTypeRef ref = IOHIDDeviceGetProperty(m_IOHIDDeviceRef, CFSTR(kIOHIDReportDescriptorKey));
@@ -326,7 +329,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
     }
 
     @Override
-    synchronized public int getFeatureReport(int reportId, byte[] data, int length) {
+    public synchronized int getFeatureReport(int reportId, byte[] data, int length) {
         if (!m_Open)
             throw new IllegalStateException("device not open");
         int[] len = {length};
@@ -347,16 +350,10 @@ public class HidDevice extends purejavahidapi.HidDevice {
     }
 
     private int setReport(int type, byte reportID, byte[] data, int length) {
-        ByteBuffer data_to_send;
-
-        int length_to_send;
-        int res;
-
-        data_to_send = ByteBuffer.wrap(data);
-        length_to_send = length;
+        ByteBuffer data_to_send = ByteBuffer.wrap(data);
 
         // On Mac OS X the IOHIDDeviceSetReport() always takes pure data and explicit report number (which maybe 0 if numbers are not used)
-        res = IOHIDDeviceSetReport(m_IOHIDDeviceRef, type, 0xff & reportID, data_to_send, length_to_send);
+        int res = IOHIDDeviceSetReport(m_IOHIDDeviceRef, type, 0xff & reportID, data_to_send, length);
 
         if (res == kIOReturnSuccess) {
             return length;
@@ -364,30 +361,28 @@ public class HidDevice extends purejavahidapi.HidDevice {
             return -1;
     }
 
-    @Override
-    synchronized public int setOutputReport(byte reportId, byte[] data, int length) {
+    private int setReportInternal(int type, byte reportId, byte[] data, int length) {
         if (!m_Open)
             throw new IllegalStateException("device not open");
         int i = reportId != 0 ? 1 : 0;
         byte[] temp = new byte[length + i];
         temp[0] = reportId;
         System.arraycopy(data, 0, temp, i, length);
-        return setReport(kIOHIDReportTypeOutput, reportId, temp, length + i);
+        return setReport(type, reportId, temp, length + i);
     }
 
     @Override
-    synchronized public int setFeatureReport(byte reportId, byte[] data, int length) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
-        int i = reportId != 0 ? 1 : 0;
-        byte[] temp = new byte[length + i];
-        temp[0] = reportId;
-        System.arraycopy(data, 0, temp, i, length);
-        return setReport(kIOHIDReportTypeFeature, reportId, temp, length + i);
+    public synchronized int setOutputReport(byte reportId, byte[] data, int length) {
+        return setReportInternal(kIOHIDReportTypeOutput, reportId, data, length);
     }
 
     @Override
-    synchronized public void close() {
+    public synchronized int setFeatureReport(byte reportId, byte[] data, int length) {
+        return setReportInternal(kIOHIDReportTypeFeature, reportId, data, length);
+    }
+
+    @Override
+    public synchronized void close() {
         if (!m_Open)
             throw new IllegalStateException("device not open");
 
@@ -435,7 +430,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
     }
 
     @Override
-    synchronized public purejavahidapi.HidDeviceInfo getHidDeviceInfo() {
+    public synchronized purejavahidapi.HidDeviceInfo getHidDeviceInfo() {
         return m_HidDeviceInfo;
     }
 }
