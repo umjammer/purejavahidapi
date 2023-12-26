@@ -7,18 +7,16 @@
 package vavi.awt.joystick.hidapi;
 
 import java.io.IOException;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.logging.Level;
 
 import net.java.games.input.AbstractController;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
-import net.java.games.input.Event;
 import net.java.games.input.Rumbler;
-import net.java.games.input.osx.plugin.DualShock4Plugin;
+import net.java.games.input.osx.OSXRumbler;
+import net.java.games.input.usb.HidController;
+import net.java.games.input.usb.HidRumbler;
 import purejavahidapi.HidDevice;
-import vavi.util.Debug;
+import vavi.awt.joystick.hid4java.Hid4JavaInputEvent;
 
 
 /**
@@ -27,12 +25,10 @@ import vavi.util.Debug;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 2023-10-03 nsano initial version <br>
  */
-public class HidapiController extends AbstractController {
+public class HidapiController extends AbstractController implements HidController {
 
     /** */
     private final HidDevice device;
-
-    BlockingDeque<byte[]> reports = new LinkedBlockingDeque<>();
 
     /**
      * Protected constructor for a controller containing the specified
@@ -46,10 +42,32 @@ public class HidapiController extends AbstractController {
     protected HidapiController(HidDevice device, Component[] components, Controller[] children, Rumbler[] rumblers) {
         super(device.getHidDeviceInfo().getPath(), components, children, rumblers);
         this.device = device;
+    }
 
+    @Override
+    public int getVendorId() {
+        return device.getHidDeviceInfo().getVendorId();
+    }
+
+    @Override
+    public int getProductId() {
+        return device.getHidDeviceInfo().getProductId();
+    }
+
+    @Override
+    public void open() throws IOException {
+        super.open();
+
+        device.open();
         device.setInputReportListener((source, Id, data, len) -> {
-            reports.offer(data);
+            fireOnInput(new HidapiInputEvent(HidapiController.this, getComponents(), data));
         });
+    }
+
+    @Override
+    public void close() throws IOException {
+        device.close();
+        super.close();
     }
 
     @Override
@@ -58,27 +76,17 @@ public class HidapiController extends AbstractController {
     }
 
     @Override
-    protected boolean getNextDeviceEvent(Event event) throws IOException {
-Debug.println("getNextDeviceEvent: here");
+    public void output(Report report) throws IOException {
+        report.cascadeTo(getRumblers());
 
-        DualShock4Plugin.display(data);
-
-        event.set(null, 0, 0);
-        return true;
-    }
-
-    /** */
-    private byte[] data;
-
-    @Override
-    protected void pollDevice() throws IOException {
-Debug.println("pollDevice: here");
-        if (reports.peek() != null) {
-            try {
-                this.data = reports.take();
-            } catch (InterruptedException e) {
-Debug.printStackTrace(Level.FINE, e);
-            }
+        int reportId = ((HidReport) report).getReportId();
+        byte[] data = ((HidReport) report).getData();
+        for (Rumbler rumbler : getRumblers()) {
+            ((HidRumbler) rumbler).fill(data);
+        }
+        int r = device.setOutputReport((byte) reportId, data, data.length);
+        if (r == -1) {
+            throw new IOException("write returns -1");
         }
     }
 }

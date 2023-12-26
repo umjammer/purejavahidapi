@@ -20,7 +20,7 @@ import net.java.games.input.Rumbler;
 import purejavahidapi.HidDevice;
 import purejavahidapi.HidDeviceInfo;
 import purejavahidapi.PureJavaHidApi;
-import purejavahidapi.hidparser.HidParser;
+import vavi.hid.parser.HidParser;
 import vavi.util.Debug;
 import vavi.util.StringUtil;
 
@@ -31,13 +31,13 @@ import vavi.util.StringUtil;
  * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
  * @version 0.00 241003 nsano initial version <br>
  */
-public final class HidapiControllerEnvironment extends ControllerEnvironment {
+public final class HidapiEnvironmentPlugin extends ControllerEnvironment {
 
     /** */
     private final List<HidapiController> controllers;
 
     /** */
-    public HidapiControllerEnvironment() {
+    public HidapiEnvironmentPlugin() {
         controllers = PureJavaHidApi.enumerateDevices().stream().map(this::toHidapiController).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
@@ -45,6 +45,7 @@ public final class HidapiControllerEnvironment extends ControllerEnvironment {
     @SuppressWarnings("WhileLoopReplaceableByForEach")
     private HidapiController toHidapiController(HidDeviceInfo deviceInfo) {
         try {
+Debug.println("deviceInfo: " + deviceInfo);
             HidDevice device = PureJavaHidApi.openDevice(deviceInfo);
             if (device == null) {
                 return null;
@@ -62,17 +63,21 @@ Debug.printf("@@@@@@@@@@@ remove: %s/%s ... %d%n", d.getHidDeviceInfo().getPath(
                 }
             });
 
+            // TODO out source filters
+            if (!((device.getHidDeviceInfo().getUsagePage()) == 1 &&
+                    (device.getHidDeviceInfo().getUsageId()) == 5)) {
+                return null;
+            }
+
 Debug.printf("device '%s' ----", device.getHidDeviceInfo().getProductString());
-            byte[] data = new byte[132];
+            byte[] data = new byte[4096];
             data[0] = 1;
-            int len = device.getFeatureReport(data, data.length);
-Debug.printf("getFeatureReport: len: %d", len);
+            int len = device.getInputReportDescriptor(data, data.length);
+Debug.printf("getInputReportDescriptor: len: %d", len);
             if (len > 0) {
-Debug.printf("getFeatureReport:%n%s", StringUtil.getDump(data));
+Debug.printf("getInputReportDescriptor:%n%s", StringUtil.getDump(data, len));
                 HidParser hidParser = new HidParser();
-                byte[] data2 = new byte[len];
-                System.arraycopy(data, 1, data2, 0, len - 1);
-//                hidParser.parse(data2, len);
+                hidParser.parse(data, len);
             }
 
             return new HidapiController(device, new Component[0], new Controller[0], new Rumbler[0]);
