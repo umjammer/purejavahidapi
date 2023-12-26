@@ -199,8 +199,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
     @Override
     synchronized public int setOutputReport(byte reportID, byte[] data, int length) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
         // In Linux write() to HID device data is preceded with the report number only if numbered reports are used
         //
         // "The first byte of the buffer passed to write() should be set to the report
@@ -221,8 +219,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
     @Override
     synchronized public int setFeatureReport(byte reportId, byte[] data, int length) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
         byte[] temp = new byte[length + 1];
         temp[0] = reportId;
         System.arraycopy(data, 0, temp, 1, length);
@@ -233,23 +229,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
     }
 
     @Override
-    synchronized public void setInputReportListener(InputReportListener listener) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
-        m_InputReportListener = listener;
-    }
-
-    @Override
-    synchronized public void setDeviceRemovalListener(DeviceRemovalListener listener) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
-        m_DeviceRemovalListener = listener;
-    }
-
-    @Override
     synchronized public int getInputReportDescriptor(byte[] data, int length) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
         int res = ioctl(m_DeviceHandle, HIDIOCGRDESC, data);
         if (res < 0)
             return -1;
@@ -258,8 +238,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
     @Override
     synchronized public int getFeatureReport(int reportId, byte[] data, int length) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
         return ioctl(m_DeviceHandle, HIDIOCGFEATURE(length), data);
     }
 

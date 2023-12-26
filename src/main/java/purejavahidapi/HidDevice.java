@@ -75,8 +75,6 @@ abstract public class HidDevice {
      * @param listener the listener object or null to un-set
      */
     public void setInputReportListener(InputReportListener listener) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
         m_InputReportListener = listener;
     }
 
@@ -201,8 +199,6 @@ abstract public class HidDevice {
      * @param listener the device removal listener object or null to un-set
      */
     public void setDeviceRemovalListener(DeviceRemovalListener listener) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
         m_DeviceRemovalListener = listener;
     }
 

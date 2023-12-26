@@ -176,8 +176,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
     @Override
     public synchronized int setOutputReport(byte reportId, byte[] data, int length) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
         if (m_ReportLength[OUTPUT] <= 0)
             throw new IllegalArgumentException("this device supports no output reports");
         // In Windows writeFile() to HID device data has to be preceded with the report
@@ -207,8 +205,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
     @Override
     public synchronized int getInputReportDescriptor(byte[] data, int length) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
         int[] transferred = new int[1];
         try (Memory memory = new Memory(length)) {
             OVERLAPPED overlapped = new OVERLAPPED();
@@ -219,7 +215,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
                     return -1;
             }
 
-            if (!GetOverlappedResult(m_Handles[INPUT], overlapped, transferred, true/* wait */))
+            if (!GetOverlappedResult(m_Handles[INPUT], overlapped, transferred, true /* wait */))
                 return -1;
             memory.read(0, data, 0, transferred[0]);
         }
@@ -228,8 +224,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
     @Override
     public synchronized int getFeatureReport(int reportId, byte[] data, int length) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
         if (false) { // can't use this as it will not return the size of the report
             if (!HidD_GetFeature(m_Handles[FEATURE], data, length)) {
                 // register_error(dev, "HidD_SetFeature");
@@ -243,14 +237,12 @@ public class HidDevice extends purejavahidapi.HidDevice {
                     return -1;
             }
 
-            if (!GetOverlappedResult(m_Handles[FEATURE], m_Overlapped[FEATURE], m_Transfrd[FEATURE], true/* wait */))
+            if (!GetOverlappedResult(m_Handles[FEATURE], m_Overlapped[FEATURE], m_Transfrd[FEATURE], true /* wait */))
                 return -1;
             m_Buffer[FEATURE].read(1, data, 0, m_Transfrd[FEATURE][0]);
             return m_Transfrd[FEATURE][0];
         }
-        return -1; // Eclipse says this is unreachable (it is), but won't compile without it ... go
-        // figure
-
+        return -1; // Eclipse says this is unreachable (it is), but won't compile without it ... go figure
     }
 
     private void runReadOnBackground() {
@@ -297,8 +289,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
     @Override
     public int setFeatureReport(byte reportId, byte[] data, int length) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
         if (false) {
             byte[] buf = new byte[length + 1];
             buf[0] = reportId;

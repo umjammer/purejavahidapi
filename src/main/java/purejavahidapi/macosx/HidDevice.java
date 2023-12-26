@@ -182,20 +182,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
         m_SyncStart.waitAndSync();
     }
 
-    @Override
-    public synchronized void setInputReportListener(InputReportListener listener) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
-        m_InputReportListener = listener;
-    }
-
-    @Override
-    public synchronized void setDeviceRemovalListener(DeviceRemovalListener listener) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
-        m_DeviceRemovalListener = listener;
-    }
-
     static void processPendingEvents() {
         int res;
         do {
@@ -306,8 +292,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
     @Override
     public synchronized int getInputReportDescriptor(byte[] data, int length) {
-        if (!m_Open)
-            throw new IllegalStateException("device not open");
         CFTypeRef ref = IOHIDDeviceGetProperty(m_IOHIDDeviceRef, CFSTR(kIOHIDReportDescriptorKey));
         if (ref != null && CFGetTypeID(ref.getPointer()) == CFDataGetTypeID()) {
             Pointer descriptor_buf = CFDataGetBytePtr(ref.getPointer());
