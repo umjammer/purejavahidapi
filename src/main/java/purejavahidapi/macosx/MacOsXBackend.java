@@ -111,7 +111,7 @@ log.warning("no device for " + deviceInfo.getPath());
         for (int i = 0; i < num_devices; i++) {
             IOHIDDeviceRef os_dev = new IOHIDDeviceRef(device_array[i]);
             String x = createPathForDevice(os_dev);
-            if (path.equals(x)) {
+            if (path != null && path.equals(x)) {
                 int ret = IOHIDDeviceOpen(os_dev, kIOHIDOptionsTypeNone);
                 if (ret == kIOReturnSuccess) {
                     CFRetain(os_dev);

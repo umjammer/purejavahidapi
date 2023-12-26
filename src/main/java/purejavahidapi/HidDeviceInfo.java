@@ -181,28 +181,28 @@ public class HidDeviceInfo {
     @Override
     public String toString() {
 
-        return String.format("[" //
-                        + "device id '%s', " //
-                        + "path '%s', " //
-                        + "vendor id 0x%04X, " //
-                        + "product id 0x%04X, " //
-                        + "release num 0x%04X, " //
-                        + "usage page 0x%04X, " //
-                        + "usage id 0x%04X, " //
-                        + "serial '%s', " //
-                        + "manufacturer '%s', " //
-                        + "product id '%s'] " //
-                , //
-                m_DeviceId.trim(), //
-                m_DevicePath.trim(), //
-                m_VendorId & 0xFFFF, //
-                m_ProductId & 0xFFFF, //
-                m_ReleaseNumber & 0xFFFF, //
-                m_UsagePage & 0xFFFF, //
-                m_UsageId & 0xFFFF, //
-                m_SerialNumberString.trim(), //
-                m_ManufactureString.trim(), //
-                m_ProductString.trim()//
+        return String.format("["
+                        + "device id '%s', "
+                        + "path '%s', "
+                        + "vendor id 0x%04X, "
+                        + "product id 0x%04X, "
+                        + "release num 0x%04X, "
+                        + "usage page 0x%04X, "
+                        + "usage id 0x%04X, "
+                        + "serial '%s', "
+                        + "manufacturer '%s', "
+                        + "product id '%s'] "
+                ,
+                m_DeviceId.trim(),
+                m_DevicePath != null ? m_DevicePath.trim(): "",
+                m_VendorId & 0xFFFF,
+                m_ProductId & 0xFFFF,
+                m_ReleaseNumber & 0xFFFF,
+                m_UsagePage & 0xFFFF,
+                m_UsageId & 0xFFFF,
+                m_SerialNumberString != null ? m_SerialNumberString.trim() : "",
+                m_ManufactureString != null ? m_ManufactureString.trim() : "",
+                m_ProductString != null ? m_ProductString.trim() : ""
         );
     }
 }
