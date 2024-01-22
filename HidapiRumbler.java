@@ -18,12 +18,14 @@ import net.java.games.input.usb.HidRumbler;
  */
 public class HidapiRumbler implements HidRumbler {
 
+    private final int reportId;
     private final Component.Identifier identifier;
     private float value;
 
     private final int offset;
 
-    public HidapiRumbler(Component.Identifier identifier, int offset) {
+    public HidapiRumbler(int reportId, Component.Identifier identifier, int offset) {
+        this.reportId = reportId;
         this.identifier = identifier;
         this.offset = offset;
     }
@@ -49,6 +51,11 @@ public class HidapiRumbler implements HidRumbler {
     @Override
     public Component.Identifier getOutputIdentifier() {
         return identifier;
+    }
+
+    @Override
+    public int getReportId() {
+        return reportId;
     }
 
     @Override

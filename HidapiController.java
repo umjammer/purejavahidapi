@@ -77,13 +77,10 @@ public class HidapiController extends AbstractController implements HidControlle
 
     @Override
     public void output(Report report) throws IOException {
-        report.cascadeTo(getRumblers());
+        ((HidReport) report).setup(getRumblers());
 
         int reportId = ((HidReport) report).getReportId();
         byte[] data = ((HidReport) report).getData();
-        for (Rumbler rumbler : getRumblers()) {
-            ((HidRumbler) rumbler).fill(data);
-        }
         int r = device.setOutputReport((byte) reportId, data, data.length);
         if (r == -1) {
             throw new IOException("write returns -1");
