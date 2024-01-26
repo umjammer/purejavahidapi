@@ -7,6 +7,7 @@
 package vavi.awt.joystick.hidapi;
 
 import net.java.games.input.AbstractComponent;
+import net.java.games.input.WrappedComponent;
 import net.java.games.input.usb.HidComponent;
 import vavi.hid.parser.Field;
 import vavi.hid.parser.HidParser.Feature;
@@ -20,7 +21,7 @@ import static vavi.hid.parser.HidParser.Feature.RELATIVE;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 2024-01-17 nsano initial version <br>
  */
-public class HidapiComponent extends AbstractComponent implements HidComponent {
+public class HidapiComponent extends AbstractComponent implements HidComponent, WrappedComponent<Field> {
 
     private final Field field;
 
@@ -67,5 +68,10 @@ public class HidapiComponent extends AbstractComponent implements HidComponent {
     @Override
     public void setValue(byte[] data) {
         setEventValue(field.getValue(data));
+    }
+
+    @Override
+    public Field getWrappedObject() {
+        return field;
     }
 }
