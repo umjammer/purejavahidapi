@@ -8,8 +8,10 @@ package vavi.awt.joystick.hidapi;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -17,6 +19,7 @@ import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
 import net.java.games.input.Rumbler;
+import net.java.games.input.usb.HidControllerEnvironment;
 import purejavahidapi.HidDevice;
 import purejavahidapi.HidDeviceInfo;
 import purejavahidapi.PureJavaHidApi;
@@ -31,7 +34,7 @@ import vavi.util.StringUtil;
  * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
  * @version 0.00 241003 nsano initial version <br>
  */
-public final class HidapiEnvironmentPlugin extends ControllerEnvironment {
+public final class HidapiEnvironmentPlugin extends ControllerEnvironment implements HidControllerEnvironment {
 
     /** */
     private final List<HidapiController> controllers;
@@ -95,6 +98,22 @@ Debug.printf("getInputReportDescriptor:%n%s", StringUtil.getDump(data, len));
     @Override
     public boolean isSupported() {
         return true;
+    }
+
+    /**
+     * @throws NoSuchElementException no matched device of mid and pid
+     */
+    @Override
+    public HidapiController getController(int mid, int pid) {
+        HidapiController[] controllers = Arrays.stream(getControllers()).map(HidapiController.class::cast).toArray(HidapiController[]::new);
+Debug.println("controllers: " + getControllers().length);
+        for (HidapiController controller : controllers) {
+Debug.printf("%s: %4x, %4x%n", controller.getName(), controller.getVendorId(), controller.getProductId());
+            if (controller.getVendorId() == mid && controller.getProductId() == pid) {
+                return controller;
+            }
+        }
+        throw new NoSuchElementException(String.format("no device: mid: %1$d(0x%1$x), pid: %2$d(0x%2$x))", mid, pid));
     }
 }
 
