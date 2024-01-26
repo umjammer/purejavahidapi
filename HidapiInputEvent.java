@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import net.java.games.input.Component;
 import net.java.games.input.Event;
 import net.java.games.input.InputEvent;
+import net.java.games.input.usb.HidInputEvent;
 import vavi.awt.joystick.hid4java.Hid4JavaComponent;
 
 
@@ -22,7 +23,7 @@ import vavi.awt.joystick.hid4java.Hid4JavaComponent;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 2023-12-22 nsano initial version <br>
  */
-public class HidapiInputEvent extends InputEvent {
+public class HidapiInputEvent extends InputEvent implements HidInputEvent {
 
     /** which value is changed only */
     private final Deque<HidapiComponent> deque = new LinkedList<>();
@@ -33,7 +34,7 @@ public class HidapiInputEvent extends InputEvent {
     /** source */
     private final byte[] data;
 
-    /** for debug */
+    @Override
     public byte[] getData() {
         return data;
     }
