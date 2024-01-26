@@ -44,9 +44,11 @@ public class HidapiInputEvent extends InputEvent {
         this.data = data;
         this.time = System.nanoTime();
 
+        boolean fillAll = Boolean.parseBoolean(System.getProperty("net.java.games.input.InputEvent.fillAll", "false"));
+
         deque.clear();
         for (HidapiComponent component : Arrays.stream(components).map(HidapiComponent.class::cast).toArray(HidapiComponent[]::new)) {
-            if (component.isValueChanged(data)) {
+            if (fillAll || component.isValueChanged(data)) {
                 component.setValue(data);
                 deque.offer(component);
             }
