@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.awt.joystick.hidapi;
+package vavi.games.input.purejavahidapi.spi;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

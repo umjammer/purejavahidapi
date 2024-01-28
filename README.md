@@ -5,6 +5,8 @@
 
 # Pure Java HID-API
 
+ yet another hid api for java with [jinput](https://github.com/umjammer/jinput) spi
+
 ## Install
 
  * [maven](https://jitpack.io/#umjammer/purejavahidapi)
@@ -15,7 +17,8 @@
 
 ## TODO
 
- * jinput spi
+ * ~~jinput spi~~
+ * ~~fix hid parser~~ use parser in [jinput](https://github.com/umjammer/jinput)
 
 ---
 

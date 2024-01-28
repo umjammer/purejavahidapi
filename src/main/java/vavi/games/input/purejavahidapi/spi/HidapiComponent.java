@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.awt.joystick.hidapi;
+package vavi.games.input.purejavahidapi.spi;
 
 import net.java.games.input.AbstractComponent;
 import net.java.games.input.WrappedComponent;
