@@ -12,11 +12,8 @@ import net.java.games.input.AbstractController;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.Rumbler;
-import net.java.games.input.osx.OSXRumbler;
 import net.java.games.input.usb.HidController;
-import net.java.games.input.usb.HidRumbler;
 import purejavahidapi.HidDevice;
-import vavi.awt.joystick.hid4java.Hid4JavaInputEvent;
 
 
 /**

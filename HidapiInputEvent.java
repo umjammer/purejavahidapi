@@ -14,7 +14,6 @@ import net.java.games.input.Component;
 import net.java.games.input.Event;
 import net.java.games.input.InputEvent;
 import net.java.games.input.usb.HidInputEvent;
-import vavi.awt.joystick.hid4java.Hid4JavaComponent;
 
 
 /**
