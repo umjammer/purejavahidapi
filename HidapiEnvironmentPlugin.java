@@ -20,10 +20,10 @@ import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
 import net.java.games.input.Rumbler;
 import net.java.games.input.usb.HidControllerEnvironment;
+import net.java.games.input.usb.parser.HidParser;
 import purejavahidapi.HidDevice;
 import purejavahidapi.HidDeviceInfo;
 import purejavahidapi.PureJavaHidApi;
-import vavi.hid.parser.HidParser;
 import vavi.util.Debug;
 import vavi.util.StringUtil;
 

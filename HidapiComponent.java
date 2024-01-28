@@ -9,10 +9,10 @@ package vavi.awt.joystick.hidapi;
 import net.java.games.input.AbstractComponent;
 import net.java.games.input.WrappedComponent;
 import net.java.games.input.usb.HidComponent;
-import vavi.hid.parser.Field;
-import vavi.hid.parser.HidParser.Feature;
+import net.java.games.input.usb.parser.Field;
+import net.java.games.input.usb.parser.HidParser.Feature;
 
-import static vavi.hid.parser.HidParser.Feature.RELATIVE;
+import static net.java.games.input.usb.parser.HidParser.Feature.RELATIVE;
 
 
 /**
