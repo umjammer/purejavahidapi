@@ -40,11 +40,8 @@ import com.sun.jna.Callback;
 import com.sun.jna.Memory;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
-import purejavahidapi.DeviceRemovalListener;
-import purejavahidapi.InputReportListener;
 import purejavahidapi.shared.SyncPoint;
 import vavi.util.Debug;
-import vavi.util.StringUtil;
 
 import static purejavahidapi.macosx.CoreFoundationLibrary.*;
 import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceCallback;
@@ -272,8 +269,14 @@ Debug.println(Level.FINER, "HidReportCallback: " + Thread.currentThread().getNam
             HidDevice dev = m_DevFromCallback.get(this);
             if (dev != null) {
                 if (dev.m_InputReportListener != null) {
-                    int length = report_length.intValue();
+                    int length;
+                    if (reportId == 0) {
+                        length = report_length.intValue();
                     report.read(0, dev.m_InputReportData, 0, length);
+                    } else {
+                        length = report_length.intValue() - 1;
+                        report.read(1, dev.m_InputReportData, 0, length);
+                    }
                     dev.m_InputReportListener.onInputReport(dev, (byte) reportId, dev.m_InputReportData, length);
                 }
             } else
