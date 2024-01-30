@@ -5,7 +5,7 @@
 
   <groupId>purejavahidapi</groupId>
   <artifactId>purejavahidapi</artifactId>
-  <version>0.0.15v-SNAPSHOT</version>
+  <version>0.0.15v</version>
 
   <packaging>jar</packaging>
   <name>Pure Java HID-API</name>
