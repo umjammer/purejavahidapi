@@ -8,18 +8,23 @@ package vavi.games.input.purejavahidapi.spi;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
+import net.java.games.input.DeviceSupportPlugin;
 import net.java.games.input.Rumbler;
+import net.java.games.input.usb.HidComponent;
 import net.java.games.input.usb.HidControllerEnvironment;
+import net.java.games.input.usb.UsageId;
+import net.java.games.input.usb.UsagePage;
 import net.java.games.input.usb.parser.HidParser;
 import purejavahidapi.HidDevice;
 import purejavahidapi.HidDeviceInfo;
@@ -37,34 +42,17 @@ import vavi.util.StringUtil;
 public final class HidapiEnvironmentPlugin extends ControllerEnvironment implements HidControllerEnvironment {
 
     /** */
-    private final List<HidapiController> controllers;
-
-    /** */
-    public HidapiEnvironmentPlugin() {
-        controllers = PureJavaHidApi.enumerateDevices().stream().map(this::toHidapiController).filter(Objects::nonNull).collect(Collectors.toList());
-    }
+    private List<HidapiController> controllers;
 
     /** @return nullable */
     @SuppressWarnings("WhileLoopReplaceableByForEach")
     private HidapiController toHidapiController(HidDeviceInfo deviceInfo) {
         try {
-Debug.println("deviceInfo: " + deviceInfo);
+Debug.println(Level.FINER, "deviceInfo: " + deviceInfo);
             HidDevice device = PureJavaHidApi.openDevice(deviceInfo);
             if (device == null) {
                 return null;
             }
-
-            device.setDeviceRemovalListener(d -> {
-Debug.println("device removed");
-                Iterator<HidapiController> i = controllers.iterator();
-                while (i.hasNext()) {
-                    HidapiController c = i.next();
-                    if (Objects.equals(c.getName(), d.getHidDeviceInfo().getPath())) {
-                        controllers.remove(c);
-Debug.printf("@@@@@@@@@@@ remove: %s/%s ... %d%n", d.getHidDeviceInfo().getPath(), controllers.size());
-                    }
-                }
-            });
 
             // TODO out source filters
             if (!((device.getHidDeviceInfo().getUsagePage()) == 1 &&
@@ -72,27 +60,91 @@ Debug.printf("@@@@@@@@@@@ remove: %s/%s ... %d%n", d.getHidDeviceInfo().getPath(
                 return null;
             }
 
-Debug.printf("device '%s' ----", device.getHidDeviceInfo().getProductString());
+            List<Component> components = new ArrayList<>();
+            List<Controller> children = new ArrayList<>();
+            List<Rumbler> rumblers = new ArrayList<>();
+
+Debug.printf(Level.FINE, "device '%s' ----", device.getHidDeviceInfo().getProductString());
             byte[] data = new byte[4096];
             data[0] = 1;
             int len = device.getInputReportDescriptor(data, data.length);
-Debug.printf("getInputReportDescriptor: len: %d", len);
-            if (len > 0) {
-Debug.printf("getInputReportDescriptor:%n%s", StringUtil.getDump(data, len));
-                HidParser hidParser = new HidParser();
-                hidParser.parse(data, len);
+Debug.printf(Level.FINER, "getInputReportDescriptor: len: %d", len);
+            if (len <= 0) {
+                return null;
+            }
+Debug.printf(Level.FINER, "getInputReportDescriptor:%n%s", StringUtil.getDump(data, len));
+            HidParser parser = new HidParser();
+            parser.parse(data, len).enumerateFields().forEach(f -> {
+Debug.println(Level.FINER, "UsagePage: " + UsagePage.map(f.getUsagePage()) + ", " + f.getUsageId());
+                if (UsagePage.map(f.getUsagePage()) != null) {
+                    switch (UsagePage.map(f.getUsagePage())) {
+                    case GENERIC_DESKTOP, BUTTON -> {
+                        UsagePage usagePage = UsagePage.map(f.getUsagePage());
+                        UsageId usageId = usagePage.mapUsage(f.getUsageId());
+                        components.add(new HidapiComponent(usageId.toString(), usageId.getIdentifier(), f));
+Debug.println(Level.FINER, "add: " + components.get(components.size() - 1));
+                    }
+                    default -> {
+                    }
+                    }
+                }
+            });
+
+            // extra elements by plugin
+            for (DeviceSupportPlugin plugin : DeviceSupportPlugin.getPlugins()) {
+Debug.println(Level.FINER, "plugin: " + plugin + ", " + plugin.match(device));
+                if (plugin.match(device)) {
+Debug.println(Level.FINE, "@@@ plugin for extra: " + plugin.getClass().getName());
+                    components.addAll(plugin.getExtraComponents(device));
+                    children.addAll(plugin.getExtraChildControllers(device));
+                    rumblers.addAll(plugin.getExtraRumblers(device));
+                }
             }
 
-            return new HidapiController(device, new Component[0], new Controller[0], new Rumbler[0]);
+            //
+            device.setDeviceRemovalListener(d -> {
+Debug.println(Level.FINE, "device removed");
+                Iterator<HidapiController> i = controllers.iterator();
+                while (i.hasNext()) {
+                    HidapiController c = i.next();
+                    if (Objects.equals(c.getName(), d.getHidDeviceInfo().getPath())) {
+                        controllers.remove(c);
+Debug.printf(Level.FINE, "@@@@@@@@@@@ remove: %s/%s ... %d%n", d.getHidDeviceInfo().getPath(), controllers.size());
+                    }
+                }
+            });
+
+Debug.printf(Level.FINE, "@@@@@@@@@@@ add: %s/%s", device.getHidDeviceInfo().getManufacturerString(), device.getHidDeviceInfo().getProductString());
+Debug.printf(Level.FINE, "    components: %d, %s", components.size(), components);
+//Debug.printf(Level.FINE, "    children: %d", children.size());
+Debug.printf(Level.FINE, "    rumblers: %d, %s", rumblers.size(), rumblers);
+            return new HidapiController(device,
+                    components.toArray(Component[]::new),
+                    children.toArray(Controller[]::new),
+                    rumblers.toArray(Rumbler[]::new));
 
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
+    private void enumerate() throws IOException {
+        boolean r = isSupported();
+Debug.println(Level.FINE, "isSupported: " + r);
+        controllers = PureJavaHidApi.enumerateDevices().stream().map(this::toHidapiController).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
     @Override
-    public Controller[] getControllers() {
-        return controllers.toArray(Controller[]::new);
+    public HidapiController[] getControllers() {
+        if (controllers == null) {
+            try {
+                enumerate();
+            } catch (IOException e) {
+Debug.printStackTrace(Level.FINE, e);
+                return new HidapiController[0];
+            }
+        }
+        return controllers.toArray(HidapiController[]::new);
     }
 
     @Override
@@ -105,10 +157,9 @@ Debug.printf("getInputReportDescriptor:%n%s", StringUtil.getDump(data, len));
      */
     @Override
     public HidapiController getController(int mid, int pid) {
-        HidapiController[] controllers = Arrays.stream(getControllers()).map(HidapiController.class::cast).toArray(HidapiController[]::new);
-Debug.println("controllers: " + getControllers().length);
-        for (HidapiController controller : controllers) {
-Debug.printf("%s: %4x, %4x%n", controller.getName(), controller.getVendorId(), controller.getProductId());
+Debug.println(Level.FINE, "controllers: " + getControllers().length);
+        for (HidapiController controller : getControllers()) {
+Debug.printf(Level.FINE, "%s: %4x, %4x%n", controller.getName(), controller.getVendorId(), controller.getProductId());
             if (controller.getVendorId() == mid && controller.getProductId() == pid) {
                 return controller;
             }

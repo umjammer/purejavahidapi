@@ -93,7 +93,7 @@ public class MacOsXBackend extends Backend {
         try {
             return new HidDevice((HidDeviceInfo) deviceInfo, this);
         } catch (IllegalStateException e) {
-log.warning("no device for " + deviceInfo.getPath());
+log.finer("no device for " + deviceInfo.getPath());
             return null;
         }
     }
@@ -118,7 +118,7 @@ log.warning("no device for " + deviceInfo.getPath());
                     CFRelease(device_set);
                     return os_dev;
                 } else {
-                    log.fine(String.format("IOHIDDeviceOpen: %d,%d,%d", (ret >> (32 - 6)) & 0x3f, (ret >> (32 - 6 - 12)) & 0xFFF, ret & 0x3FFF));
+                    log.finer(String.format("IOHIDDeviceOpen: %d, %d, %d", (ret >> (32 - 6)) & 0x3f, (ret >> (32 - 6 - 12)) & 0xFFF, ret & 0x3FFF));
                 }
             }
         }
@@ -128,7 +128,7 @@ for (int i = 0; i < num_devices; i++) {
  log.finest(String.format("device[%d]: %s", i, x));
 }
         CFRelease(device_set);
-log.warning("no IOHIDDeviceRef for path: " + path);
+log.finer("no IOHIDDeviceRef for path: " + path);
         return null;
     }
 

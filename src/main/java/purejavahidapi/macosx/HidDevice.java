@@ -33,6 +33,7 @@ package purejavahidapi.macosx;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Hashtable;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.sun.jna.Callback;
@@ -42,6 +43,8 @@ import com.sun.jna.Pointer;
 import purejavahidapi.DeviceRemovalListener;
 import purejavahidapi.InputReportListener;
 import purejavahidapi.shared.SyncPoint;
+import vavi.util.Debug;
+import vavi.util.StringUtil;
 
 import static purejavahidapi.macosx.CoreFoundationLibrary.*;
 import static purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceCallback;
@@ -233,17 +236,18 @@ public class HidDevice extends purejavahidapi.HidDevice {
         return null;
     }
 
+    /** */
     static String createPathForDevice(IOHIDDeviceRef dev) {
-        short vid, pid;
         String transport = getStringProperty(dev, CFSTR(kIOHIDTransportKey));
         if (transport == null)
             return null;
-        vid = (short) getIntProperty(dev, CFSTR(kIOHIDVendorIDKey));
-        pid = (short) getIntProperty(dev, CFSTR(kIOHIDProductIDKey));
+        short vid = (short) getIntProperty(dev, CFSTR(kIOHIDVendorIDKey));
+        short pid = (short) getIntProperty(dev, CFSTR(kIOHIDProductIDKey));
 
         return String.format("%s_%04x_%04x_0x%08x", transport, vid, pid, Pointer.nativeValue(dev.getPointer()));
     }
 
+    /** */
     static class HidDeviceRemovalCallback implements IOHIDDeviceCallback {
 
         @Override
@@ -259,22 +263,17 @@ public class HidDevice extends purejavahidapi.HidDevice {
         }
     }
 
+    /** */
     static class HidReportCallback implements IOHIDReportCallback {
 
         @Override
         public void callback(Pointer context, int result, Pointer sender, int reportType, int reportId, Pointer report, NativeLong report_length) {
-            // System.out.println("HidReportCallback "+Thread.currentThread().getName());
+Debug.println(Level.FINER, "HidReportCallback: " + Thread.currentThread().getName());
             HidDevice dev = m_DevFromCallback.get(this);
             if (dev != null) {
                 if (dev.m_InputReportListener != null) {
-                    int length;
-                    if (reportId == 0) {
-                        length = report_length.intValue();
-                        report.read(0, dev.m_InputReportData, 0, length);
-                    } else {
-                        length = report_length.intValue() - 1;
-                        report.read(1, dev.m_InputReportData, 0, length);
-                    }
+                    int length = report_length.intValue();
+                    report.read(0, dev.m_InputReportData, 0, length);
                     dev.m_InputReportListener.onInputReport(dev, (byte) reportId, dev.m_InputReportData, length);
                 }
             } else
@@ -282,6 +281,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
         }
     }
 
+    /** */
     private static class PerformSignalCallback implements CFRunLoopPerformCallBack {
 
         @Override
@@ -294,19 +294,19 @@ public class HidDevice extends purejavahidapi.HidDevice {
     public synchronized int getInputReportDescriptor(byte[] data, int length) {
         CFTypeRef ref = IOHIDDeviceGetProperty(m_IOHIDDeviceRef, CFSTR(kIOHIDReportDescriptorKey));
         if (ref != null && CFGetTypeID(ref.getPointer()) == CFDataGetTypeID()) {
-            Pointer descriptor_buf = CFDataGetBytePtr(ref.getPointer());
-            int copy_len = (int) CFDataGetLength(ref.getPointer());
+            Pointer descriptorBuf = CFDataGetBytePtr(ref.getPointer());
+            int copyLen = (int) CFDataGetLength(ref.getPointer());
 
-            if (descriptor_buf == null || copy_len < 0) {
+            if (descriptorBuf == null || copyLen < 0) {
                 throw new IllegalStateException("Zero buffer/length");
             }
 
-            if (length < copy_len) {
-                copy_len = length;
+            if (length < copyLen) {
+                copyLen = length;
             }
 
-            descriptor_buf.read(0, data, 0, copy_len);
-            return copy_len;
+            descriptorBuf.read(0, data, 0, copyLen);
+            return copyLen;
         } else {
             return -1;
         }
@@ -322,22 +322,18 @@ public class HidDevice extends purejavahidapi.HidDevice {
         int res = IOHIDDeviceGetReport(m_IOHIDDeviceRef, kIOHIDReportTypeFeature, reportId, ByteBuffer.wrap(temp), len);
         int rlen = len[0];
         if (res == kIOReturnSuccess) {
-            if (reportId == 0) {
-                System.arraycopy(temp, 0, data, 0, rlen);
-                return rlen;
-            } else {
-                System.arraycopy(temp, 1, data, 0, rlen - 1);
-                return rlen - 1;
-            }
+            System.arraycopy(temp, 0, data, 0, rlen);
+            return rlen;
         } else
             return -1;
     }
 
+    /** */
     private int setReport(int type, byte reportID, byte[] data, int length) {
-        ByteBuffer data_to_send = ByteBuffer.wrap(data);
+        ByteBuffer dataToSend = ByteBuffer.wrap(data);
 
         // On Mac OS X the IOHIDDeviceSetReport() always takes pure data and explicit report number (which maybe 0 if numbers are not used)
-        int res = IOHIDDeviceSetReport(m_IOHIDDeviceRef, type, 0xff & reportID, data_to_send, length);
+        int res = IOHIDDeviceSetReport(m_IOHIDDeviceRef, type, 0xff & reportID, dataToSend, length);
 
         if (res == kIOReturnSuccess) {
             return length;
@@ -345,6 +341,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
             return -1;
     }
 
+    /** */
     private int setReportInternal(int type, byte reportId, byte[] data, int length) {
         if (!m_Open)
             throw new IllegalStateException("device not open");

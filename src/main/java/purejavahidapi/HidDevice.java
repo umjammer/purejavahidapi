@@ -179,7 +179,7 @@ abstract public class HidDevice {
      * <p>
      *
      * @param reportId a specifying the report ID to received
-     * @param data     a byte array into which data is received
+     * @param data     a byte array into which data is received, first byte for report id is included.
      * @param length   the size of the feature report
      * @return the number of bytes actually received or -1 if the call failed
      */

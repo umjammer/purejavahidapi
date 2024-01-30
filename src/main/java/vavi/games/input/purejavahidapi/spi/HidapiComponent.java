@@ -6,6 +6,8 @@
 
 package vavi.games.input.purejavahidapi.spi;
 
+import java.util.function.Function;
+
 import net.java.games.input.AbstractComponent;
 import net.java.games.input.WrappedComponent;
 import net.java.games.input.usb.HidComponent;
@@ -25,6 +27,9 @@ public class HidapiComponent extends AbstractComponent implements HidComponent, 
 
     private final Field field;
 
+    /** special data picker (e.g. for touch x, y) */
+    private Function<byte[], Integer> function;
+
     /**
      * Protected constructor
      *
@@ -37,12 +42,21 @@ public class HidapiComponent extends AbstractComponent implements HidComponent, 
     }
 
     /**
-     * @param offset bits
+     * @param offset bits (must be excluded first one byte (8 bits) for report id)
      * @param size bit length
      */
     public HidapiComponent(String name, Identifier id, int offset, int size) {
+        this(name, id, offset, size, null);
+    }
+
+    /**
+     * @param offset bits (must be excluded first one byte (8 bits) for report id)
+     * @param size bit length
+     */
+    public HidapiComponent(String name, Identifier id, int offset, int size, Function<byte[], Integer> function) {
         super(name, id);
         this.field = new Field(offset, size);
+        this.function = function;
     }
 
     @Override

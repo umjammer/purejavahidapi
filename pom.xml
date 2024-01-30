@@ -5,11 +5,42 @@
 
   <groupId>purejavahidapi</groupId>
   <artifactId>purejavahidapi</artifactId>
-  <version>0.0.14v</version>
+  <version>0.0.15v-SNAPSHOT</version>
 
   <packaging>jar</packaging>
   <name>Pure Java HID-API</name>
   <url>https://github.com/umjammer/purejavahidapi</url>
+
+  <profiles>
+    <profile>
+      <!-- mvn -P run antrun:run -Dfoo='bar' -->
+      <id>run</id>
+      <build>
+        <plugins>
+          <plugin>
+            <!-- GOOD: fork: OK, test jars: OK, user args, default args: OK -->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.1.0</version>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <java classname="vavi.games.input.purejavahidapi.spi.GamepadTest" fork="true">
+                  <classpath>
+                    <path refid="maven.compile.classpath"/>
+                    <path refid="maven.test.classpath"/>
+                  </classpath>
+                  <jvmarg value="-Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties" />
+                </java>
+              </target>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
   <build>
     <plugins>
