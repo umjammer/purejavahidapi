@@ -36,7 +36,6 @@ import java.nio.file.AccessDeniedException;
 
 import com.sun.jna.Native;
 import purejavahidapi.DeviceRemovalListener;
-import purejavahidapi.InputReportListener;
 import purejavahidapi.shared.SyncPoint;
 
 import static purejavahidapi.linux.CLibrary.EACCES;
@@ -166,8 +165,12 @@ public class HidDevice extends purejavahidapi.HidDevice {
                     // the HID descriptor AND parse it. I like the Mac OS and Windows ways better, what a mess the world is!
                     int bytes_read = read(m_DeviceHandle, m_InputReportBytes, m_InputReportBytes.length);
                     if (m_InputReportListener != null) {
-                        byte reportID = m_UsesNumberedReports ? m_InputReportBytes[0] : 0;
-                        System.arraycopy(m_InputReportBytes, 0, m_InputReportBytes, 0, bytes_read);
+                        byte reportID = 0;
+                        if (m_UsesNumberedReports) {
+                            reportID = m_InputReportBytes[0];
+                            bytes_read--;
+                            System.arraycopy(m_InputReportBytes, 1, m_InputReportBytes, 0, bytes_read);
+                        }
                         m_InputReportListener.onInputReport(this, reportID, m_InputReportBytes, bytes_read);
                     }
                 }
