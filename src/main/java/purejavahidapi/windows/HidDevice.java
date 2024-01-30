@@ -273,16 +273,11 @@ public class HidDevice extends purejavahidapi.HidDevice {
                 }
             }
 
-            if (m_Transfrd[INPUT][0] > 0) {
-                byte reportId = m_Buffer[INPUT].getByte(0);
-                m_Transfrd[INPUT][0]--;
+            byte reportId = m_Transfrd[INPUT][0] > 0 ? m_Buffer[INPUT].getByte(0) : 0;
+            m_Buffer[INPUT].read(0, m_InputReportBytes, 0, m_Transfrd[INPUT][0]);
 
-                m_Buffer[INPUT].read(1, m_InputReportBytes, 0, m_Transfrd[INPUT][0]);
-
-                if (m_InputReportListener != null)
-                    m_InputReportListener.onInputReport(this, reportId, m_InputReportBytes, m_Transfrd[INPUT][0]);
-            }
-
+            if (m_InputReportListener != null)
+                m_InputReportListener.onInputReport(this, reportId, m_InputReportBytes, m_Transfrd[INPUT][0]);
         }
         m_SyncShutdown.waitAndSync();
     }

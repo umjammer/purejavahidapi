@@ -62,4 +62,9 @@ public class HidapiRumbler implements HidRumbler {
     public void fill(byte[] data) {
         data[offset] = (byte) value;
     }
+
+    @Override
+    public String toString() {
+        return getOutputName();
+    }
 }

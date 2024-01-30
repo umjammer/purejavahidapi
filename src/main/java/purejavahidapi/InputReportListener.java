@@ -53,8 +53,8 @@ public interface InputReportListener {
      * as possible and inside this call.
      *
      * @param source       the HidDevice object that called this method
-     * @param reportID     the report Id number if used or zero
-     * @param reportData   the report data
+     * @param reportID     the report id number if used or zero
+     * @param reportData   the report data included first byte for report id
      * @param reportLength report length
      */
     void onInputReport(HidDevice source, byte reportID, byte[] reportData, int reportLength);
