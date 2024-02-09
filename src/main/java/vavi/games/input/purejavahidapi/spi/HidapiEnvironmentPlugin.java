@@ -18,10 +18,9 @@ import java.util.stream.Collectors;
 
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
-import net.java.games.input.ControllerEnvironment;
+import net.java.games.input.ControllerListenerSupport;
 import net.java.games.input.DeviceSupportPlugin;
 import net.java.games.input.Rumbler;
-import net.java.games.input.usb.HidComponent;
 import net.java.games.input.usb.HidControllerEnvironment;
 import net.java.games.input.usb.UsageId;
 import net.java.games.input.usb.UsagePage;
@@ -39,7 +38,7 @@ import vavi.util.StringUtil;
  * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
  * @version 0.00 241003 nsano initial version <br>
  */
-public final class HidapiEnvironmentPlugin extends ControllerEnvironment implements HidControllerEnvironment {
+public final class HidapiEnvironmentPlugin extends ControllerListenerSupport implements HidControllerEnvironment {
 
     /** */
     private List<HidapiController> controllers;
