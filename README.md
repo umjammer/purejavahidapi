@@ -19,6 +19,7 @@
 
  * ~~jinput spi~~
  * ~~fix hid parser~~ use parser in [jinput](https://github.com/umjammer/jinput)
+ * separate device creation and start listener
 
 ---
 
