@@ -33,13 +33,16 @@ public class DualShock4Plugin extends DualShock4PluginBase {
     /** @param object HidDevice */
     @Override
     public boolean match(Object object) {
-        HidDevice device = (HidDevice) object;
+        if (object instanceof HidDevice device) {
 Debug.printf(Level.FINER, "%04x, %s, %04x, %s",
-        device.getHidDeviceInfo().getVendorId(),
-        device.getHidDeviceInfo().getVendorId() == 0x54c,
-        device.getHidDeviceInfo().getProductId(),
-        device.getHidDeviceInfo().getProductId() == 0x9cc);
-        return device.getHidDeviceInfo().getVendorId() == 0x54c && device.getHidDeviceInfo().getProductId() == 0x9cc;
+            device.getHidDeviceInfo().getVendorId(),
+            device.getHidDeviceInfo().getVendorId() == 0x54c,
+            device.getHidDeviceInfo().getProductId(),
+            device.getHidDeviceInfo().getProductId() == 0x9cc);
+            return device.getHidDeviceInfo().getVendorId() == 0x54c && device.getHidDeviceInfo().getProductId() == 0x9cc;
+        } else {
+            return false;
+        }
     }
 
     @Override
