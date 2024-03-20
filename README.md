@@ -2,8 +2,11 @@
 [![Java CI](https://github.com/umjammer/purejavahidapi/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/purejavahidapi/actions/workflows/maven.yml)
 [![CodeQL](https://github.com/umjammer/purejavahidapi/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/umjammer/purejavahidapi/actions/workflows/codeql-analysis.yml)
 ![Java](https://img.shields.io/badge/Java-17-b07219)
+[![Parent](https://img.shields.io/badge/Parent-jinput-pink)](https://github.com/umjammer/jinput)
 
 # Pure Java HID-API
+
+<img alt="logo" src="https://github.com/umjammer/purejavahidapi/assets/493908/e6daabd2-dc2e-40db-83e8-46b8c616e129" width="120" />
 
  yet another hid api for java with [jinput](https://github.com/umjammer/jinput) spi
 
@@ -23,7 +26,7 @@
 
 ---
 
-# Original
+# [Original](https://github.com/nyholku/purejavahidapi)
 
 <sup><sub>*"I'm inspired,intrigued, amazed and annoyed by how difficult, complex, rare and long time coming simple cross
 platform USB IO is!"*</sub></sup>
@@ -104,7 +107,7 @@ If you are considering developing a USB device, then incarnating it as a HID dev
 So what is the catch?
 
 HID devices are limited to transferring one 64 byte packet once each 1 msec or 64000 bytes/sec each way. If you need
-more than that you have take an other route, I suggest you head over to <a href="http://libusb.info"> libusb
+more than that you have take another route, I suggest you head over to <a href="http://libusb.info"> libusb
 project </a>.
 
 ### Why yet another HID library?
@@ -196,10 +199,5 @@ great <a href="https://github.com/signal11/hidapi" target="hidapi"> HIDAPI </a>
 by <a href="http://www.signal11.us" target="signal11"> SIGNAL11 </a>  a lot of the technical and intricate knowledge
 needed to access HID devices were cherry picked ripe from that project which I gratefully acknowledge.
 
-
-
-
-
-
-
- 
+---
+<sub>image by <a href="https://www.pngwing.com/en/free-png-sgwdq">pngwing.com</a></sub>
